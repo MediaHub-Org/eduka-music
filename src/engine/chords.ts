@@ -99,11 +99,15 @@ export function buildChord(spec: ChordSpec): Chord {
   const pcs = tones.map((t) => t.pc)
   let bassPc: Pc | null = null
   let bassTone: Tone | null = null
-  if (spec.bass !== undefined) {
-    bassPc = pcOf(spec.bass)
+  if (spec.bass !== undefined && pcOf(spec.bass) !== rootPc) {
+    const bp = pcOf(spec.bass)
+    bassPc = bp
     bassTone =
-      tones.find((t) => t.pc === bassPc) ??
-      { pc: bassPc, name: spec.bass, semis: (bassPc - rootPc + 12) % 12, step: 0, label: 'B', family: 'b' }
+      tones.find((t) => t.pc === bp) ??
+      { pc: bp, name: spec.bass, semis: (bp - rootPc + 12) % 12, step: 0, label: 'B', family: 'b' }
+  } else if (spec.bass !== undefined) {
+    // C/C ≡ C: un bajo igual a la raíz no es un bajo distinto.
+    spec = { root: spec.root, quality: spec.quality }
   }
   return { spec, tones, pcs, bassPc, bassTone }
 }
@@ -118,7 +122,9 @@ export function chordSymbol(spec: ChordSpec, notation: Notation): string {
 }
 
 export function sameChord(a: ChordSpec, b: ChordSpec): boolean {
-  const bassA = a.bass === undefined ? null : pcOf(a.bass)
-  const bassB = b.bass === undefined ? null : pcOf(b.bass)
+  const bassOf = (s: ChordSpec): number | null =>
+    s.bass === undefined || pcOf(s.bass) === pcOf(s.root) ? null : pcOf(s.bass)
+  const bassA = bassOf(a)
+  const bassB = bassOf(b)
   return pcOf(a.root) === pcOf(b.root) && a.quality === b.quality && bassA === bassB
 }

@@ -14,7 +14,7 @@ describe('voiceLeading', () => {
     const D = diatonic({ tonic, mode: mode as Mode }, 'triads')
     const chords = preset.degrees.map((d) => buildChord(D[d].spec))
     const chain = chainVoicings(chords, inst as InstrumentId, 0)
-    expect(chain.map(positionKey)).toEqual((golden.chains as Record<string, string[]>)[key])
+    expect(chain.map((p) => (p ? positionKey(p) : null))).toEqual((golden.chains as Record<string, string[]>)[key])
   })
 
   test('moveCost de una posición consigo misma', () => {

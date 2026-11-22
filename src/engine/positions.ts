@@ -103,7 +103,8 @@ function evalPos(fr: (number | null)[], c: Chord, inst: StringInstrument, capo: 
     (gtr ? lowM * 0.3 + highM * 1.2 : mutes * 0.1) -
     opens * 0.2 +
     lo * 0.05 +
-    (bass.family === 'r' ? 0 : gtr ? 2.5 : inst.reentrant ? 0.3 : 1) +
+    // Con bajo pedido, el bajo es el correcto: no se penaliza que no sea la raíz.
+    (c.bassPc != null || bass.family === 'r' ? 0 : gtr ? 2.5 : inst.reentrant ? 0.3 : 1) +
     (has5 ? 0 : 0.3)
   return { kind: 'frets', frets: fr, score, fingers, barre, bass, lo, hi: nz.length ? Math.max(...nz) : 0 }
 }
@@ -117,7 +118,11 @@ export function clearPositionCache(): void {
 }
 
 const cacheKey = (c: Chord, inst: InstrumentId, capo: number): string =>
-  `${inst}|${capo}|${c.spec.root}|${c.spec.quality}`
+  `${inst}|${capo}|${c.spec.root}|${c.spec.quality}|${c.bassPc ?? ''}`
+
+/** Rango MIDI del bajo añadido en piano. */
+export const PIANO_BASS_MIN = 36
+export const PIANO_BASS_MAX = 59
 
 function pianoPos(c: Chord): KeyPosition[] {
   const base = 48 + pcOf(c.spec.root)
@@ -126,8 +131,40 @@ function pianoPos(c: Chord): KeyPosition[] {
   for (let k = 0; k < c.tones.length; k++) {
     let n = stack.slice(k).concat(stack.slice(0, k).map((m) => m + 12))
     while (n[0] >= 60) n = n.map((m) => m - 12)
-    out.push({ kind: 'keys', notes: n, inversion: k, bass: toneOf(c, n[0] % 12)! })
+    if (c.bassPc != null && c.bassTone) {
+      // Bajo en la octava inmediatamente por debajo de la nota más grave de la mano derecha.
+      // (En los acordes de 9ª del artifact `n[0]` no siempre es la más grave: se usa el mínimo.)
+      const low = Math.min(...n)
+      const b = low - (((low - c.bassPc) % 12 + 12) % 12 || 12)
+      let notes = [b, ...n]
+      while (notes[0] < PIANO_BASS_MIN) notes = notes.map((m) => m + 12)
+      while (notes[0] > PIANO_BASS_MAX) notes = notes.map((m) => m - 12)
+      out.push({ kind: 'keys', notes, inversion: k, bass: c.bassTone })
+    } else out.push({ kind: 'keys', notes: n, inversion: k, bass: toneOf(c, n[0] % 12)! })
   }
+  return out
+}
+
+/**
+ * Regla del bajo pedido sobre las alturas que suenan: la más grave tiene `bassPc` y, si el bajo
+ * no pertenece al acorde, `bassPc` no suena en ninguna otra altura.
+ */
+function bassOk(midis: number[], c: Chord): boolean {
+  if (c.bassPc == null) return true
+  if (!midis.length) return false
+  const lo = Math.min(...midis)
+  if (lo % 12 !== c.bassPc) return false
+  if (c.pcs.includes(c.bassPc)) return true
+  return midis.every((m) => m % 12 !== c.bassPc || m === lo)
+}
+
+export function midisOf(p: Position, inst: InstrumentId, capo: number): number[] {
+  if (p.kind === 'keys') return p.notes.slice()
+  const T = tuningWithCapo(strings(inst), capo)
+  const out: number[] = []
+  p.frets.forEach((f, s) => {
+    if (f != null) out.push(T[s] + f)
+  })
   return out
 }
 
@@ -145,15 +182,26 @@ function stringPositions(c: Chord, instId: InstrumentId, capo: number): FretPosi
     [base, 4],
     [base.slice(1), 4],
   ]
+  const bp = c.bassPc
+  // Con bajo pedido se permite además su pc (si es ajeno al acorde, solo como nota más grave: bassOk).
+  const allowed = bp != null && !c.pcs.includes(bp) ? [...c.pcs, bp] : c.pcs
+  const midisOfFrets = (fr: (number | null)[]): number[] => {
+    const r: number[] = []
+    fr.forEach((f, s) => {
+      if (f != null) r.push(T[s] + f)
+    })
+    return r
+  }
   let out: FretPosition[] = []
-  for (const [req, span] of levels) {
+  for (const [lvlReq, span] of levels) {
+    const req = bp != null && !lvlReq.includes(bp) ? [...lvlReq, bp] : lvlReq
     const seen = new Set<string>()
     out = []
     for (let w = 0; w <= F - span; w++) {
       const cand = T.map((t) => {
         const o: (number | null)[] = allow ? [null] : []
-        if (c.pcs.includes(t % 12)) o.push(0)
-        for (let f = Math.max(1, w); f <= w + span; f++) if (c.pcs.includes((t + f) % 12)) o.push(f)
+        if (allowed.includes(t % 12)) o.push(0)
+        for (let f = Math.max(1, w); f <= w + span; f++) if (allowed.includes((t + f) % 12)) o.push(f)
         return o
       })
       const acc: (number | null)[] = []
@@ -170,10 +218,11 @@ function stringPositions(c: Chord, instId: InstrumentId, capo: number): FretPosi
           const key = acc.join(',')
           if (seen.has(key)) return
           seen.add(key)
+          if (bp != null && !bassOk(midisOfFrets(acc), c)) return
           const e = evalPos(acc.slice(), c, inst, capo)
           if (e.fingers > 4) return
           if (acc.includes(0) && e.hi > 4) return
-          if (req.length < base.length) e.score += 1
+          if (lvlReq.length < base.length) e.score += 1
           out.push(e)
           return
         }
@@ -195,6 +244,7 @@ function stringPositions(c: Chord, instId: InstrumentId, capo: number): FretPosi
       if (off.some((o) => o != null && o + b < 0)) b += 12
       const fr = off.map((o) => (o == null ? null : o + b))
       if (Math.max(...fr.filter((f): f is number => f != null)) > F) continue
+      if (bp != null && !bassOk(midisOfFrets(fr), c)) continue
       const key = fr.join(',')
       let p = out.find((x) => x.frets.join(',') === key)
       if (!p) {

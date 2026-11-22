@@ -2,7 +2,7 @@ import type { Chord } from './chords'
 import type { InstrumentId } from './instruments'
 import { INSTRUMENTS } from './instruments'
 import type { KeyPosition, Position } from './positions'
-import { allPositions, topPositions } from './positions'
+import { PIANO_BASS_MAX, PIANO_BASS_MIN, allPositions, topPositions } from './positions'
 
 export function moveCost(a: Position, b: Position): number {
   if (a.kind === 'keys' && b.kind === 'keys') {
@@ -24,14 +24,20 @@ export function moveCost(a: Position, b: Position): number {
   throw new Error('moveCost: positions of different instrument kinds')
 }
 
-/** `pianoNext` del artifact: voicing de piano más cercano, probando octavas -12/0/+12 dentro de 40..84. */
+/**
+ * `pianoNext` del artifact: voicing de piano más cercano, probando octavas -12/0/+12 dentro de 40..84.
+ * Con bajo pedido, el voicing entero se desplaza (el bajo sigue siendo la nota más grave) y el bajo
+ * debe quedar en PIANO_BASS_MIN..PIANO_BASS_MAX.
+ */
 function pianoNext(from: KeyPosition, c: Chord): Position {
   let best: KeyPosition | null = null
   let bc = 1e9
+  const hasBass = c.bassPc != null
   for (const p of allPositions(c, 'piano', 0) as KeyPosition[])
     for (const o of [-12, 0, 12]) {
       const notes = p.notes.map((m) => m + o)
-      if (notes[0] < 40 || notes[notes.length - 1] > 84) continue
+      if (notes[notes.length - 1] > 84) continue
+      if (hasBass ? notes[0] < PIANO_BASS_MIN || notes[0] > PIANO_BASS_MAX : notes[0] < 40) continue
       const q: KeyPosition = { ...p, notes }
       const v = moveCost(from, q)
       if (v < bc) {
@@ -42,8 +48,10 @@ function pianoNext(from: KeyPosition, c: Chord): Position {
   return best ?? allPositions(c, 'piano', 0)[0]
 }
 
-export function nearestPosition(from: Position | null, c: Chord, inst: InstrumentId, capo: number): Position {
+/** Voicing más cercano a `from`; `null` si el acorde no tiene posición en el instrumento (p. ej. un bajo imposible). */
+export function nearestPosition(from: Position | null, c: Chord, inst: InstrumentId, capo: number): Position | null {
   const list = allPositions(c, inst, capo)
+  if (!list.length) return null
   if (!from) return list[0]
   if (INSTRUMENTS[inst].kind === 'piano') return pianoNext(from as KeyPosition, c)
   let bi = 0
@@ -61,14 +69,20 @@ export function nearestPosition(from: Position | null, c: Chord, inst: Instrumen
 /**
  * Un voicing por acorde, cada uno el más cercano al anterior. `start` es la posición de la que
  * se parte (p. ej. la actual); sin ella el primer acorde usa su mejor posición (`topPositions[0]`).
+ * Un acorde sin posición da `null` y el siguiente se encadena desde el último voicing real.
  */
-export function chainVoicings(chords: Chord[], inst: InstrumentId, capo: number, start?: Position): Position[] {
-  const out: Position[] = []
+export function chainVoicings(
+  chords: Chord[],
+  inst: InstrumentId,
+  capo: number,
+  start?: Position,
+): (Position | null)[] {
+  const out: (Position | null)[] = []
   let prev: Position | null = start ?? null
   chords.forEach((c, i) => {
-    const p = i === 0 && !start ? topPositions(c, inst, capo)[0] : nearestPosition(prev, c, inst, capo)
+    const p = i === 0 && !start ? (topPositions(c, inst, capo)[0] ?? null) : nearestPosition(prev, c, inst, capo)
     out.push(p)
-    prev = p
+    if (p) prev = p
   })
   return out
 }
