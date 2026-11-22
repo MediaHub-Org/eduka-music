@@ -3,7 +3,7 @@ import golden from '../golden/artifact.json'
 import { buildChord } from '../../src/engine/chords'
 import type { QualityId } from '../../src/engine/chords'
 import type { InstrumentId } from '../../src/engine/instruments'
-import { INSTRUMENT_ORDER } from '../../src/engine/instruments'
+import { INSTRUMENT_ORDER, INSTRUMENTS } from '../../src/engine/instruments'
 import type { Position } from '../../src/engine/positions'
 import {
   allPositions,
@@ -14,7 +14,6 @@ import {
   topPositions,
   tuningWithCapo,
 } from '../../src/engine/positions'
-import { INSTRUMENTS } from '../../src/engine/instruments'
 
 const g = golden as unknown as { positions: Record<string, string[]> }
 const goldenPositionKeys = Object.keys(g.positions)
@@ -52,7 +51,6 @@ describe('positions', () => {
     const t0 = performance.now()
     allPositions(c, 'guitar', 0)
     const ms = performance.now() - t0
-    console.log(`perf G9 guitar: ${ms.toFixed(1)} ms`)
     expect(ms).toBeLessThan(150)
   })
 
