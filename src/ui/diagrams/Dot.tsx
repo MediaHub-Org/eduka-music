@@ -58,7 +58,7 @@ export function Dot({ x, y, d, on, s, f }: DotProps) {
           y={y + 4}
           textAnchor="middle"
           fontSize={txt.length > 3 ? 8.5 : txt.length > 2 ? 9.5 : 11}
-          fill={d.tc ?? '#fff'}
+          fill={d.tc ?? (d.fill === 'var(--ink)' ? 'var(--bg)' : '#fff')}
           opacity={op}
         >
           {txt}
