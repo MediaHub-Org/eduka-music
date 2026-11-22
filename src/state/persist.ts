@@ -1,6 +1,7 @@
 import type { StateStorage } from 'zustand/middleware'
-import type { AppState, Favorite, PersistedState, SavedProgression, Settings } from './store'
-import { STORE_VERSION } from './store'
+import { INSTRUMENT_ORDER, QUALITY } from '../engine'
+import type { AppState, Current, Favorite, PersistedState, PracticePrefs, SavedProgression, Settings } from './types'
+import { STORE_VERSION } from './types'
 
 /** localStorage que nunca lanza: JSON corrupto o almacenamiento roto → null (valores por defecto). */
 export function safeStorage(): StateStorage {
@@ -33,6 +34,69 @@ export function safeStorage(): StateStorage {
 }
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
+const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
+const isNote = (v: unknown): boolean => typeof v === 'string' && /^[A-G][#b]?$/.test(v)
+const isQuality = (v: unknown): boolean => typeof v === 'string' && Object.hasOwn(QUALITY, v)
+const isInstrument = (v: unknown): boolean => typeof v === 'string' && (INSTRUMENT_ORDER as string[]).includes(v)
+const TIME_SIGNATURES = ['4/4', '3/4', '6/8']
+const isChord = (c: unknown): boolean =>
+  isObj(c) && isNote(c.root) && isQuality(c.quality) && (c.bass === undefined || isNote(c.bass))
+const isFav = (f: unknown): boolean =>
+  isObj(f) && typeof f.id === 'string' && isChord(f.chord) && isInstrument(f.instrument) &&
+  isNum(f.capo) && Number.isInteger(f.capo) && f.capo >= 0 && f.capo <= 7 &&
+  typeof f.positionKey === 'string' && isNum(f.createdAt)
+const isProg = (p: unknown): boolean =>
+  isObj(p) && typeof p.id === 'string' && typeof p.name === 'string' &&
+  typeof p.timeSignature === 'string' && TIME_SIGNATURES.includes(p.timeSignature) &&
+  isNum(p.bpm) && p.bpm > 0 && isNum(p.createdAt) && isNum(p.updatedAt) &&
+  Array.isArray(p.items) && p.items.every((i) => isObj(i) && isChord(i.chord) && isNum(i.beats) && i.beats > 0)
+
+function cleanSettings(s: unknown): Partial<Settings> | null {
+  if (!isObj(s)) return null
+  const out: Partial<Settings> = {}
+  if (s.lang === 'es' || s.lang === 'en') out.lang = s.lang
+  if (s.notation === 'latin' || s.notation === 'english') out.notation = s.notation
+  if (isNum(s.capo)) out.capo = Math.min(7, Math.max(0, Math.round(s.capo)))
+  if (typeof s.leftHanded === 'boolean') out.leftHanded = s.leftHanded
+  if (s.labels === 'notes' || s.labels === 'intervals') out.labels = s.labels
+  return out
+}
+
+function cleanCurrent(c: unknown): Partial<Current> {
+  const out: Partial<Current> = {}
+  if (!isObj(c)) return out
+  if (isInstrument(c.instrument)) out.instrument = c.instrument as Current['instrument']
+  if (isObj(c.key) && isNote(c.key.tonic) && (c.key.mode === 'maj' || c.key.mode === 'min'))
+    out.key = { tonic: c.key.tonic as string, mode: c.key.mode }
+  if (c.chordSet === 'triads' || c.chordSet === 'sevenths') out.chordSet = c.chordSet
+  if (isChord(c.chord)) out.chord = c.chord as Current['chord']
+  if (c.positionKey === null || typeof c.positionKey === 'string') out.positionKey = c.positionKey
+  if (c.direction === 'down' || c.direction === 'up' || c.direction === 'step' || c.direction === 'variant')
+    out.direction = c.direction
+  return out
+}
+
+function cleanPractice(p: unknown): Partial<PracticePrefs> {
+  const out: Partial<PracticePrefs> = {}
+  if (!isObj(p)) return out
+  const vol = (v: unknown): v is number => isNum(v) && v >= 0 && v <= 1
+  if (typeof p.clickOn === 'boolean') out.clickOn = p.clickOn
+  if (typeof p.chordOn === 'boolean') out.chordOn = p.chordOn
+  if (vol(p.clickVolume)) out.clickVolume = p.clickVolume
+  if (vol(p.chordVolume)) out.chordVolume = p.chordVolume
+  if (p.countInBars === 0 || p.countInBars === 1 || p.countInBars === 2) out.countInBars = p.countInBars
+  if (p.barsPerChord === 1 || p.barsPerChord === 2 || p.barsPerChord === 4) out.barsPerChord = p.barsPerChord
+  if (isObj(p.ramp)) {
+    const r = p.ramp
+    const ramp: Partial<PracticePrefs['ramp']> = {}
+    if (typeof r.enabled === 'boolean') ramp.enabled = r.enabled
+    if (isNum(r.step) && r.step > 0) ramp.step = r.step
+    if (isNum(r.everyLoops) && r.everyLoops > 0) ramp.everyLoops = r.everyLoops
+    if (isNum(r.max) && r.max > 0) ramp.max = r.max
+    out.ramp = ramp as PracticePrefs['ramp']
+  }
+  return out
+}
 
 /** Migración del esquema: solo existe la v1. Una versión desconocida lanza → onRehydrateStorage restablece. */
 export function migrateState(persisted: unknown, version: number): PersistedState {
@@ -40,18 +104,18 @@ export function migrateState(persisted: unknown, version: number): PersistedStat
   return persisted as PersistedState
 }
 
-/** Mezcla lo guardado sobre los valores por defecto, ignorando lo que no tenga la forma esperada. */
+/** Mezcla lo guardado sobre los valores por defecto, validando por trozo: lo inválido vuelve al valor por defecto. */
 export function mergePersisted(persisted: unknown, base: PersistedState): PersistedState {
   if (!isObj(persisted)) return base
-  const pick = <T extends object>(k: string, dflt: T): T =>
-    isObj(persisted[k]) ? { ...dflt, ...(persisted[k] as Partial<T>) } : dflt
-  const arr = <T>(k: string, dflt: T[]): T[] => (Array.isArray(persisted[k]) ? (persisted[k] as T[]) : dflt)
+  const list = <T>(v: unknown, ok: (x: unknown) => boolean): T[] => (Array.isArray(v) ? (v.filter(ok) as T[]) : [])
+  const practice = { ...base.practice, ...cleanPractice(persisted.practice) }
+  practice.ramp = { ...base.practice.ramp, ...(cleanPractice(persisted.practice).ramp ?? {}) }
   return {
-    settings: pick('settings', base.settings),
-    current: pick('current', base.current),
-    favorites: arr('favorites', base.favorites),
-    progressions: arr('progressions', base.progressions),
-    practice: pick('practice', base.practice),
+    settings: { ...base.settings, ...(cleanSettings(persisted.settings) ?? {}) },
+    current: { ...base.current, ...cleanCurrent(persisted.current) },
+    favorites: list<Favorite>(persisted.favorites, isFav),
+    progressions: list<SavedProgression>(persisted.progressions, isProg),
+    practice,
   }
 }
 
@@ -62,7 +126,6 @@ export interface ImportData {
 }
 
 export type ImportError = 'invalid_json' | 'wrong_app' | 'unsupported_version' | 'invalid_shape'
-
 export function exportData(s: Pick<AppState, 'favorites' | 'progressions' | 'settings'>): string {
   return JSON.stringify(
     {
@@ -76,26 +139,6 @@ export function exportData(s: Pick<AppState, 'favorites' | 'progressions' | 'set
     null,
     2,
   )
-}
-
-const isChord = (c: unknown): boolean => isObj(c) && typeof c.root === 'string' && typeof c.quality === 'string'
-const isFav = (f: unknown): boolean =>
-  isObj(f) && typeof f.id === 'string' && isChord(f.chord) && typeof f.instrument === 'string' &&
-  typeof f.capo === 'number' && typeof f.positionKey === 'string' && typeof f.createdAt === 'number'
-const isProg = (p: unknown): boolean =>
-  isObj(p) && typeof p.id === 'string' && typeof p.name === 'string' && typeof p.timeSignature === 'string' &&
-  typeof p.bpm === 'number' && typeof p.createdAt === 'number' && typeof p.updatedAt === 'number' &&
-  Array.isArray(p.items) && p.items.every((i) => isObj(i) && isChord(i.chord) && typeof i.beats === 'number')
-
-function cleanSettings(s: unknown): Partial<Settings> | null {
-  if (!isObj(s)) return null
-  const out: Partial<Settings> = {}
-  if (s.lang === 'es' || s.lang === 'en') out.lang = s.lang
-  if (s.notation === 'latin' || s.notation === 'english') out.notation = s.notation
-  if (typeof s.capo === 'number') out.capo = Math.min(7, Math.max(0, Math.round(s.capo)))
-  if (typeof s.leftHanded === 'boolean') out.leftHanded = s.leftHanded
-  if (s.labels === 'notes' || s.labels === 'intervals') out.labels = s.labels
-  return out
 }
 
 export function parseImport(json: string): { ok: true; data: ImportData } | { ok: false; error: ImportError } {
@@ -139,5 +182,8 @@ export function applyImport(
     settings: { ...state.settings, ...data.settings },
   }
 }
+
+
+
 
 
