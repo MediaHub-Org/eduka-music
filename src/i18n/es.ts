@@ -1,0 +1,20 @@
+export const es = {
+ key:'Tonalidad',chord:'Acorde',allOf:(r:string)=>`Todos los acordes de ${r}`,libHelp:'Toca un acorde para tocarlo arriba; ‹ › para ver sus variantes.',triads:'Tríadas',sevenths:'Con 7ª',listen:'▶ Oír',notes:'Notas',intervals:'Intervalos',back:'◀ Atrás',walk:'Avanzar ▶',hearBoth:'Oír el cambio',progressions:'Progresiones',pickKey:'Elige tonalidad',wheelHelp:'Anillo exterior: tonalidades mayores. Anillo medio: menores. Lo amarillo son los acordes que entran en la tonalidad elegida.',anyChord:'Cualquier acorde',settings:'Ajustes',language:'Idioma',notation:'Notas',capo:'Cejilla',lefty:'Zurdo',no:'No',yes:'Sí',major:'mayor',minor:'menor',chordsIn:'Acordes de',position:'Posición',of:'de',frets:'trastes',open:'al aire',easy:'fácil',mid:'media',hard:'difícil',shape:'forma de',bass:'bajo',root:'Raíz',third:'Tercera',fifth:'Quinta',seventh:'Sexta / séptima',color:'Color (2, 4, 9)',bigDots:'Puntos grandes: la posición elegida',inv:['Estado fundamental','1ª inversión','2ª inversión','3ª inversión','4ª inversión'],next:'Al siguiente acorde',dDown:'Bajar una 3ª',dUp:'Subir una 3ª',dStep:'Siguiente grado',dVar:'Variante',stay1:'se queda',stayN:'se quedan',move1:'Mueve un dedo',moveN:(n:number)=>`Mueve ${n} dedos`,same:'Misma posición.',onStr:'en la cuerda',down:'baja',up:'sube',fret1:'traste',fretN:'trastes',semi1:'semitono',semiN:'semitonos',becomes:(a:string,b:string,c:string,d:string)=>`la ${a} de ${b} pasa a ser la ${c} de ${d}`,adds:'se añade',drops:'deja de sonar',sig0:'Sin alteraciones',sharps:(n:number)=>`${n} sostenido${n>1?'s':''}`,flats:(n:number)=>`${n} bemol${n>1?'es':''}`,sigL:'Armadura',relL:'Relativa',scaleL:'Escala',neighL:'Vecinas (comparten 6 de 7)',capoOn:(n:number)=>`Cejilla en el traste ${n}: los trastes se cuentan desde ella.`,reent:'Afinación reentrante: una cuerda va más aguda que la anterior, así que el bajo real puede no estar en la primera cuerda.',pianoNote:'Teclado de dos octavas a partir de Do3. La tecla con anillo es la raíz.',harm:'V mayor (menor armónica)',
+  navChords:'Acordes',navPractice:'Practicar',navKey:'Tonalidad',navMine:'Mis cosas',
+  noPosition:'Sin posición para este bajo en este instrumento',
+  search:'Busca un acorde: Do, Sol7, Am/E…',
+  overBass:'con bajo en',
+  importErrors:{invalid_json:'El archivo no es un JSON válido.',wrong_app:'Este archivo no es una copia de Eduka Music.',unsupported_version:'Esta copia es de una versión no compatible.',invalid_shape:'El archivo no tiene el formato esperado.'},
+  importDone:'Copia importada',exportData:'Exportar copia',importData:'Importar copia',
+  favorites:'Favoritos',savedProgressions:'Progresiones guardadas',
+  iv:{R:'raíz','2':'2ª','9':'9ª','♭3':'3ª menor','3':'3ª','4':'4ª','♭5':'5ª disminuida','5':'5ª','♯5':'5ª aumentada','6':'6ª','♭♭7':'7ª disminuida','♭7':'7ª menor','7':'7ª mayor'},
+  q:{maj:'mayor',m:'menor',dim:'disminuido',aug:'aumentado',sus2:'suspendido 2',sus4:'suspendido 4',maj7:'séptima mayor','7':'séptima de dominante',m7:'menor séptima',m7b5:'semidisminuido',dim7:'disminuido séptima','7sus4':'séptima sus4','6':'sexta',m6:'menor sexta',add9:'add9','9':'novena',m9:'menor novena',maj9:'novena mayor'},
+  g:{T:'Tríadas',S:'Séptimas',C:'Color'},
+  P:{pop:'Pop',jazz:'Jazz',fifties:'Años 50',blues:'Blues / rock',cycle:'Ciclo de terceras',anda:'Cadencia andaluza',minc:'Menor clásica',ballad:'Balada menor'},
+  inst:{guitar:'Guitarra',piano:'Piano',ukulele:'Ukelele',cuatro:'Cuatro venezolano',timple:'Timple',bandurria:'Bandurria'}
+}
+
+
+export type Messages = typeof es
+
+
