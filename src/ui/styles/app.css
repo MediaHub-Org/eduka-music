@@ -394,3 +394,30 @@ button:disabled { opacity: 0.4; cursor: default; }
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; transition: none !important; }
 }
+
+/* Pantalla Tonalidad */
+.keyscreen { display: flex; flex-direction: column; gap: 20px; max-width: 1180px; margin: 0 auto; }
+.key-wheel { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.key-wheel svg { width: 100%; max-width: min(460px, 100%); height: auto; }
+.key-title { margin: 0; align-self: flex-start; font-size: 30px; font-weight: 800; letter-spacing: -0.02em; display: flex; flex-direction: column; line-height: 1.1; }
+.key-title small { color: var(--mute); font-size: 13px; font-weight: 600; letter-spacing: 0; }
+.key-side { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.key-side h2 { margin: 0 0 6px; font-size: 15px; color: var(--mute); font-weight: 700; }
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.facts > div { background: var(--panel); border-radius: 12px; padding: 10px 12px; min-width: 0; }
+.facts dt { color: var(--mute); font-size: 12.5px; font-weight: 600; order: 2; }
+.facts dd { margin: 0; font-weight: 800; font-size: 16px; overflow-wrap: anywhere; }
+.facts > div { display: flex; flex-direction: column; }
+.progs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; overflow: visible; }
+.prog { display: grid; grid-template-columns: minmax(0, 1fr) 48px auto; gap: 8px; align-items: center; border: 1.5px solid var(--line); border-radius: 14px; padding: 6px 6px 6px 12px; }
+.prog-txt { min-width: 0; }
+.prog-txt small { display: block; color: var(--mute); font-size: 12.5px; font-weight: 600; }
+.prog-txt b { display: block; font-size: 16px; overflow-wrap: anywhere; }
+.prog button { min-height: 44px; font-weight: 800; }
+.prog-play { width: 48px; padding: 0; }
+.prog-go { padding: 0 14px; }
+@media (min-width: 760px) {
+  .keyscreen { flex-direction: row; align-items: flex-start; gap: 32px; }
+  .key-wheel { flex: 0 0 min(460px, 44%); position: sticky; top: 16px; }
+  .key-side { flex: 1; }
+}
