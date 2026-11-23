@@ -231,4 +231,18 @@ describe('pantalla Practicar', () => {
     expect(p).toHaveLength(1)
     expect(p[0]).toMatchObject({ name: 'Mi práctica', timeSignature: '4/4', bpm: 80, items: [{ chord: G, beats: 4 }, { chord: Cc, beats: 4 }] })
   })
+
+  test('con una guardada, elegir compases por acorde sustituye sus duraciones', async () => {
+    const user = userEvent.setup()
+    const id = useStore.getState().saveProgression({ name: 'Mia', timeSignature: '3/4', items: [{ chord: G, beats: 6 }, { chord: Cc, beats: 3 }], bpm: 77 })
+    setPendingPracticeSource({ kind: 'saved', id })
+    window.location.hash = '#/practicar'
+    render(<App />)
+    await user.click(within(screen.getByRole('group', { name: 'Compases por acorde' })).getByRole('button', { name: '2' }))
+    await user.click(screen.getByRole('button', { name: 'Guardar como progresión' }))
+    await user.type(screen.getByRole('textbox', { name: 'Nombre' }), '{Enter}')
+    const p = useStore.getState().progressions
+    expect(p).toHaveLength(2)
+    expect(p[1]).toMatchObject({ timeSignature: '3/4', bpm: 77, items: [{ chord: G, beats: 6 }, { chord: Cc, beats: 6 }] })
+  })
 })

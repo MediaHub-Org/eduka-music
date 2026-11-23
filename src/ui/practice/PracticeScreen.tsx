@@ -119,6 +119,10 @@ export function PracticeScreen({ hotkeys = true }: { hotkeys?: boolean }) {
         bpm={bpm}
         onBpm={changeBpm}
         savedBeats={savedBeats !== null}
+        onBars={(b) => {
+          useStore.getState().setPracticePrefs({ barsPerChord: b })
+          setSavedBeats(null)
+        }}
         items={items}
         onStart={pr.start}
       />

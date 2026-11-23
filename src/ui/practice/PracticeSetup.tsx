@@ -25,6 +25,8 @@ export interface PracticeSetupProps {
   onBpm: (n: number) => void
   /** Las duraciones vienen de una progresión guardada (no de "compases por acorde"). */
   savedBeats: boolean
+  /** Elegir compases por acorde: deja las duraciones de la guardada y usa 1/2/4 compases. */
+  onBars: (b: PracticePrefs['barsPerChord']) => void
   items: ProgressionItem[]
   onStart: () => void
 }
@@ -168,7 +170,7 @@ export function PracticeSetup(p: PracticeSetupProps) {
           <input type="range" min={BPM_MIN} max={BPM_MAX} step={1} value={p.bpm} aria-label={m.pr.bpm} onChange={(e) => p.onBpm(Number(e.target.value))} />
         </Field>
         <Field label={m.pr.bars}>
-          <Seg label={m.pr.bars} value={p.savedBeats ? (0 as PracticePrefs['barsPerChord']) : prefs.barsPerChord} options={BARS} onPick={(b) => setPrefs({ barsPerChord: b })} />
+          <Seg label={m.pr.bars} value={p.savedBeats ? (0 as PracticePrefs['barsPerChord']) : prefs.barsPerChord} options={BARS} onPick={p.onBars} />
           {p.savedBeats && <small className="note">{m.pr.barsSaved}</small>}
         </Field>
         <Field label={m.pr.countIn}>
