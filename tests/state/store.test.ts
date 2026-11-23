@@ -8,7 +8,7 @@ describe('store', () => {
   test('estado inicial', () => {
     const s = useStore.getState()
     expect(s.current.chord).toEqual({ root: 'E', quality: 'm7' })
-    expect(s.current).toMatchObject({ instrument: 'guitar', positionKey: 'x,x,5,7,5,7', direction: 'down', chordSet: 'sevenths' })
+    expect(s.current).toMatchObject({ instrument: 'guitar', positionKey: null, direction: 'down', chordSet: 'sevenths' })
     expect(s.settings).toEqual({ lang: 'es', notation: 'latin', capo: 0, leftHanded: false, labels: 'notes' })
     expect(s.practice.ramp).toEqual({ enabled: false, step: 5, everyLoops: 4, max: 160 })
   })
@@ -18,6 +18,7 @@ describe('store', () => {
   })
   test('setInstrument y capo resetean posición; setKey no toca el acorde', () => {
     const st = useStore.getState()
+    st.setPositionKey('x,x,5,7,5,7')
     st.setKey({ tonic: 'C', mode: 'maj' })
     expect(useStore.getState().current.chord).toEqual({ root: 'E', quality: 'm7' })
     expect(useStore.getState().current.positionKey).toBe('x,x,5,7,5,7')

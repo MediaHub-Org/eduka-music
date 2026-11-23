@@ -1,4 +1,5 @@
 import { useId, useMemo, useState } from 'react'
+import type { KeyboardEvent } from 'react'
 import type { Chord, Direction, InstrumentId, Notation, Position, StringInstrument } from '../../engine'
 import { INSTRUMENTS, buildChord, chordSymbol, describeChange, toneOf } from '../../engine'
 import { useT } from '../../i18n'
@@ -43,6 +44,18 @@ export function ChangePanel({ onBack, onHear }: ChangePanelProps) {
   const nameA = chordSymbol(A.spec, notation)
   const nameB = chordSymbol(nx.spec, notation)
   const dirs: [Direction, string][] = [['down', m.dDown], ['up', m.dUp], ['step', m.dStep], ['variant', m.dVar]]
+  const enabled = (d: Direction) => nx.inKey || d === 'variant'
+  /** Flechas dentro del grupo: mueven la selección (roving tabindex), saltando las desactivadas. */
+  const onRadioKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    const step = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0
+    if (!step) return
+    e.preventDefault()
+    const ids = dirs.map(([d]) => d).filter(enabled)
+    const i = ids.indexOf(nx.dir)
+    const d = ids[(i + step + ids.length) % ids.length]
+    setDirection(d)
+    e.currentTarget.querySelector<HTMLButtonElement>(`[data-dir="${d}"]`)?.focus()
+  }
   const sentence = P && PN ? changeSentence(describeChange(A, P, B, PN, inst, capo), A.spec, nx.spec, inst, m, notation) : m.noPosition
 
   return (
@@ -58,15 +71,17 @@ export function ChangePanel({ onBack, onHear }: ChangePanelProps) {
       </button>
       {open && (
         <div id={bodyId} className="chg-body">
-          <div className="chips" role="radiogroup" aria-label={m.next}>
+          <div className="chips" role="radiogroup" aria-label={m.next} onKeyDown={onRadioKey}>
             {dirs.map(([d, t]) => (
               <button
                 key={d}
                 type="button"
                 role="radio"
+                data-dir={d}
                 aria-checked={nx.dir === d}
+                tabIndex={nx.dir === d ? 0 : -1}
                 className={nx.dir === d ? 'on' : ''}
-                disabled={!nx.inKey && d !== 'variant'}
+                disabled={!enabled(d)}
                 onClick={() => setDirection(d)}
               >
                 {t}

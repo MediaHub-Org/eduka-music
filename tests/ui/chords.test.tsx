@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { act, cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../../src/App'
@@ -61,7 +61,8 @@ describe('pantalla Acordes', () => {
   test('posición ▶ avanza positionKey', async () => {
     const { user } = setup()
     const list = topPositions(buildChord({ root: 'E', quality: 'm7' }), 'guitar', 0)
-    const i = list.findIndex((p) => positionKey(p) === 'x,x,5,7,5,7')
+    expect(screen.getByText(`Posición 1 de ${list.length}`)).toBeInTheDocument()
+    const i = 0
     await user.click(screen.getByRole('button', { name: 'Posición siguiente' }))
     const j = (i + 1) % list.length
     expect(useStore.getState().current.positionKey).toBe(positionKey(list[j]))
@@ -107,6 +108,58 @@ describe('pantalla Acordes', () => {
     const bassRow = screen.getByRole('group', { name: /Bajo/ })
     await user.click(within(bassRow).getByRole('button', { name: 'Sol' }))
     expect(useStore.getState().current.chord).toEqual({ root: 'E', quality: 'm7', bass: 'G' })
+  })
+})
+
+describe('teclado sin choques', () => {
+  test('espacio sobre un botón enfocado lo activa y no dispara "oír"', async () => {
+    const { user } = setup()
+    const synth = await import('../../src/audio/synth')
+    const spy = vi.spyOn(synth, 'playPositions')
+    const next = screen.getByRole('button', { name: /Siguiente/ })
+    next.focus()
+    await user.keyboard(' ')
+    expect(useStore.getState().current.chord).toEqual({ root: 'C', quality: 'maj7' })
+    expect(spy).toHaveBeenCalledTimes(1)
+    spy.mockRestore()
+  })
+
+  test('espacio fuera de controles sí dispara "oír"', async () => {
+    const { user } = setup()
+    const synth = await import('../../src/audio/synth')
+    const spy = vi.spyOn(synth, 'playPositions')
+    await user.keyboard(' ')
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(useStore.getState().current.chord).toEqual({ root: 'E', quality: 'm7' })
+    spy.mockRestore()
+  })
+
+  test('flechas en el grupo de direcciones cambian la dirección, no la posición', async () => {
+    const { user } = setup()
+    await user.click(screen.getByRole('button', { name: /Al siguiente acorde/ }))
+    const group = screen.getByRole('radiogroup')
+    const radios = within(group).getAllByRole('radio')
+    expect(radios.map((r) => r.tabIndex)).toEqual([0, -1, -1, -1])
+    radios[0].focus()
+    const k0 = useStore.getState().current.positionKey
+    await user.keyboard('{ArrowRight}')
+    expect(useStore.getState().current.direction).toBe('up')
+    expect(useStore.getState().current.positionKey).toBe(k0)
+    expect(within(group).getByRole('radio', { checked: true })).toHaveFocus()
+    await user.keyboard('{ArrowLeft}{ArrowLeft}')
+    expect(useStore.getState().current.direction).toBe('variant')
+  })
+
+  test('escribir en el buscador no dispara atajos', async () => {
+    const { user, search } = setup()
+    const k0 = useStore.getState().current.positionKey
+    await user.type(search, 'fa sib n b re/fa#')
+    await user.keyboard('{ArrowLeft}{ArrowRight}')
+    const st = useStore.getState()
+    expect(st.favorites).toHaveLength(0)
+    expect(st.current.positionKey).toBe(k0)
+    expect(st.current.chord).toEqual({ root: 'E', quality: 'm7' })
+    expect(search).toHaveValue('fa sib n b re/fa#')
   })
 })
 

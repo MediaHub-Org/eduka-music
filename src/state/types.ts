@@ -75,7 +75,7 @@ export function defaultData(): PersistedState {
       key: { tonic: 'G', mode: 'maj' },
       chordSet: 'sevenths',
       chord: { root: 'E', quality: 'm7' },
-      positionKey: 'x,x,5,7,5,7',
+      positionKey: null,
       direction: 'down',
     },
     favorites: [],

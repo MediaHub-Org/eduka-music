@@ -1,6 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { RefObject } from 'react'
-import type { Position, StringInstrument } from '../../engine'
+import type { ChordSpec, Position, StringInstrument } from '../../engine'
 import { INSTRUMENTS, chordSymbol, displayNote, keysContaining, positionKey, toneOf } from '../../engine'
 import { useT } from '../../i18n'
 import { chordLongName } from '../../i18n/text'
@@ -92,6 +92,13 @@ export function ChordsScreen({ hotkeys = true }: { hotkeys?: boolean }) {
   const hero = useRef<HTMLElement>(null)
   /** Tras buscar o elegir en la biblioteca: el nombre del acorde y el mástil a la vista. */
   const toStage = () => hero.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
+  const pickFromLibrary = useCallback(
+    (spec: ChordSpec, p: Position) => {
+      a.goTo(spec, p)
+      hero.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
+    },
+    [a],
+  )
   useKeepPositionVisible(stage, P ? positionKey(P) : null, chord.spec)
 
   useHotkeys(
@@ -207,10 +214,7 @@ export function ChordsScreen({ hotkeys = true }: { hotkeys?: boolean }) {
 
       <ChordLibrary
         onGo={a.goTo}
-        onPick={(spec, p) => {
-          a.goTo(spec, p)
-          toStage()
-        }}
+        onPick={pickFromLibrary}
       />
     </div>
   )
