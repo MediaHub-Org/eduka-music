@@ -28,6 +28,8 @@ export interface PracticeSetupProps {
   /** Elegir compases por acorde: deja las duraciones de la guardada y usa 1/2/4 compases. */
   onBars: (b: PracticePrefs['barsPerChord']) => void
   items: ProgressionItem[]
+  /** Hay acordes suficientes (manual: 2–4; preset/guardada: ≥ 1). */
+  canStart: boolean
   onStart: () => void
 }
 
@@ -145,10 +147,7 @@ export function PracticeSetup(p: PracticeSetupProps) {
           ))}
         </ol>
         {manual && manual.length < MAX_MANUAL && (
-          <>
-            <SearchBox onPick={(spec) => p.onSource({ kind: 'manual', chords: [...manual, spec].slice(0, MAX_MANUAL) })} />
-            {manual.length < 2 && <p className="note">{m.pr.add}</p>}
-          </>
+          <SearchBox onPick={(spec) => p.onSource({ kind: 'manual', chords: [...manual, spec].slice(0, MAX_MANUAL) })} />
         )}
       </section>
 
@@ -250,10 +249,10 @@ export function PracticeSetup(p: PracticeSetupProps) {
       </section>
 
       <div className="pdock">
-        <button type="button" className="pgo" onClick={p.onStart} disabled={!p.items.length}>
+        <button type="button" className="pgo" onClick={p.onStart} disabled={!p.canStart}>
           {m.pr.start}
         </button>
-        {!p.items.length && <p className="note">{m.pr.empty}</p>}
+        {!p.canStart && <p className="note">{manual ? m.pr.add : m.pr.empty}</p>}
       </div>
     </div>
   )

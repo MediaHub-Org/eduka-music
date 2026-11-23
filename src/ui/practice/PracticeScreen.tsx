@@ -79,12 +79,21 @@ export function PracticeScreen({ hotkeys = true }: { hotkeys?: boolean }) {
     return chords.map((chord, i) => ({ chord, beats: savedBeats?.[i] ?? barsPerChord * bpb }))
   }, [chords, ts, savedBeats, barsPerChord])
 
+  // modo manual: de 2 a 4 acordes (spec); preset y guardada: al menos uno
+  const canStart = items.length >= (src.kind === 'manual' ? 2 : 1)
+
   const pr = usePractice(items, ts, bpm)
   useWakeLock(pr.running)
-
-  // cambiar de instrumento o de cejilla detiene la práctica
   const stopRef = useRef(pr.stop)
   stopRef.current = pr.stop
+
+  // si la fuente se queda sin acordes en marcha (p. ej. se borra la guardada), parar
+  const empty = items.length === 0
+  useEffect(() => {
+    if (empty) stopRef.current()
+  }, [empty])
+
+  // cambiar de instrumento o de cejilla detiene la práctica
   useEffect(() => () => stopRef.current(), [inst, capo])
 
   const changeBpm = (n: number) => {
@@ -93,7 +102,7 @@ export function PracticeScreen({ hotkeys = true }: { hotkeys?: boolean }) {
     if (pr.running) pr.setBpm(b)
   }
   const shownBpm = pr.running ? pr.bpmNow : bpm
-  const toggle = () => (pr.running ? pr.stop() : items.length && pr.start())
+  const toggle = () => (pr.running ? pr.stop() : canStart && pr.start())
 
   useHotkeys(
     {
@@ -105,7 +114,7 @@ export function PracticeScreen({ hotkeys = true }: { hotkeys?: boolean }) {
     hotkeys,
   )
 
-  if (!pr.running)
+  if (!pr.running || empty)
     return (
       <PracticeSetup
         src={src}
@@ -124,6 +133,7 @@ export function PracticeScreen({ hotkeys = true }: { hotkeys?: boolean }) {
           setSavedBeats(null)
         }}
         items={items}
+        canStart={canStart}
         onStart={pr.start}
       />
     )

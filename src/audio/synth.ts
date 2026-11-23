@@ -2,7 +2,7 @@ import { midisOf } from '../engine/positions'
 import type { Position } from '../engine/positions'
 import { INSTRUMENTS } from '../engine/instruments'
 import type { InstrumentId } from '../engine/instruments'
-import { getAudioContext } from './context'
+import { getAudioContext, getMasterGain, silenceAll } from './context'
 
 const ksCache = new Map<string, AudioBuffer>()
 
@@ -38,7 +38,7 @@ function note(ctx: AudioContext, m: number, t: number, piano: boolean, volume: n
       g.gain.setValueAtTime(0, t)
       g.gain.linearRampToValueAtTime(amps[i] * volume, t + 0.01)
       g.gain.exponentialRampToValueAtTime(0.0008, t + 2.2 / h)
-      o.connect(g).connect(ctx.destination)
+      o.connect(g).connect(getMasterGain())
       o.start(t)
       o.stop(t + 2.3)
     })
@@ -47,7 +47,7 @@ function note(ctx: AudioContext, m: number, t: number, piano: boolean, volume: n
     const g = ctx.createGain()
     s.buffer = ks(ctx, m)
     g.gain.value = 0.35 * volume
-    s.connect(g).connect(ctx.destination)
+    s.connect(g).connect(getMasterGain())
     s.start(t)
   }
 }
@@ -90,10 +90,15 @@ export function playClick(at: number, kind: 'accent' | 'accent2' | 'click', volu
     g.gain.setValueAtTime(0, at)
     g.gain.linearRampToValueAtTime(gain * volume * 0.3, at + 0.002)
     g.gain.exponentialRampToValueAtTime(0.0001, at + 0.05)
-    o.connect(g).connect(ctx.destination)
+    o.connect(g).connect(getMasterGain())
     o.start(at)
     o.stop(at + 0.06)
   } catch {
     /* sin audio disponible */
   }
+}
+
+/** Calla al instante todo lo que suena o está programado (parar la práctica). */
+export function stopAllSound(): void {
+  silenceAll()
 }

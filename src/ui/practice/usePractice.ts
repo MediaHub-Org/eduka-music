@@ -4,7 +4,7 @@ import type { Position, ProgressionItem, TimeSignature, TimelineEvent } from '..
 import { getAudioContext } from '../../audio/context'
 import { Scheduler } from '../../audio/scheduler'
 import type { SchedulerDeps } from '../../audio/scheduler'
-import { playClick, playPositions } from '../../audio/synth'
+import { playClick, playPositions, stopAllSound } from '../../audio/synth'
 import { selectCapo } from '../../state/selectors'
 import { useStore } from '../../state/store'
 
@@ -80,8 +80,13 @@ export function usePractice(items: ProgressionItem[], ts: TimeSignature, bpm: nu
   }
 
   const stop = useCallback(() => {
-    sched.current?.stop()
+    const s = sched.current
     sched.current = null
+    if (s) {
+      s.stop()
+      // lo ya programado (clics y acordes por delante del reloj) se calla al momento
+      stopAllSound()
+    }
     clearUi()
     setRunning(false)
     setIndex(0)
@@ -118,7 +123,8 @@ export function usePractice(items: ProgressionItem[], ts: TimeSignature, bpm: nu
         const r = ramp.current
         if (lp !== r.loop) {
           r.loop = lp
-          const next = clampBpm(bpmForLoop(r.base, p.ramp, lp - r.fromLoop))
+          // la rampa solo sube: con el BPM ya por encima del máximo se queda en la base
+          const next = clampBpm(Math.max(r.base, bpmForLoop(r.base, p.ramp, lp - r.fromLoop)))
           if (next !== r.bpm) {
             r.bpm = next
             s.setBpm(next)
