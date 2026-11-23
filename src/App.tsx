@@ -1,3 +1,6 @@
+import './ui/styles/app.css'
+import { AppShell } from './ui/shell/AppShell'
+
 export default function App() {
-  return <h1>Eduka Music</h1>
+  return <AppShell />
 }
