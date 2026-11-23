@@ -3,22 +3,12 @@ import { useT } from '../../i18n'
 import { useStore } from '../../state/store'
 import { ChordsScreen } from '../chords/ChordsScreen'
 import { KeyScreen } from '../key/KeyScreen'
+import { MineScreen } from '../mine/MineScreen'
 import { PracticeScreen } from '../practice/PracticeScreen'
+import { SettingsSheet } from '../settings/SettingsSheet'
 import { NavBar } from './NavBar'
 import { Sheet } from './Sheet'
 import { useRoute } from './useRoute'
-import type { Route } from './useRoute'
-
-function Placeholder({ route }: { route: Exclude<Route, 'chords' | 'key' | 'practice'> }) {
-  const m = useT()
-  const title = { mine: m.navMine }[route]
-  return (
-    <section className="screen placeholder">
-      <h1>{title}</h1>
-      <p className="note">{m.soon}</p>
-    </section>
-  )
-}
 
 export function AppShell() {
   const m = useT()
@@ -43,12 +33,14 @@ export function AppShell() {
           <KeyScreen />
         ) : route === 'practice' ? (
           <PracticeScreen hotkeys={!settingsOpen} />
+        ) : route === 'mine' ? (
+          <MineScreen />
         ) : (
-          <Placeholder route={route} />
+          <ChordsScreen hotkeys={!settingsOpen} />
         )}
       </main>
       <Sheet open={settingsOpen} onClose={() => setSettingsOpen(false)} title={m.settings}>
-        <p className="note">{m.soon}</p>
+        <SettingsSheet />
       </Sheet>
     </div>
   )

@@ -515,3 +515,65 @@ button:disabled { opacity: 0.4; cursor: default; }
   .prun-next:has(.keys) { width: 220px; }
   .prun-dock { max-width: 560px; width: 100%; align-self: center; }
 }
+
+/* ---------- Mis cosas ---------- */
+.mine { display: flex; flex-direction: column; gap: 24px; max-width: 900px; margin: 0 auto; padding-top: 22px; }
+.mine-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.mine-title h1 { margin: 0; font-size: clamp(28px, 7vw, 38px); line-height: 1.1; }
+.eyebrow { margin: 0 0 3px; color: var(--mute); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.mine-primary { background: var(--hl); color: #141414; border-color: var(--hl); font-weight: 800; }
+.mine-section { display: flex; flex-direction: column; gap: 12px; }
+.mine-section-hd { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.mine-section-hd h2 { margin: 0; font-size: 21px; }
+.mine-count { min-width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--panel); color: var(--mute); font-size: 13px; font-weight: 800; }
+.mine-empty { padding: 18px; border: 1px dashed var(--line); border-radius: 14px; }
+.mine-favorites { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr)); gap: 10px; }
+.mine-favorite { display: flex; align-items: stretch; min-height: 76px; overflow: hidden; border: 1.5px solid var(--line); border-radius: 14px; background: var(--panel); }
+.mine-fav-pick { display: flex; flex: 1; flex-direction: column; align-items: flex-start; justify-content: center; gap: 1px; min-height: 72px; padding: 8px 12px; border: 0; background: transparent; text-align: left; }
+.mine-fav-pick b { font-size: 24px; line-height: 1.1; }
+.mine-fav-pick span { color: var(--mute); font-size: 12px; }
+.mine-fav-remove { align-self: center; flex: none; width: 44px; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--mute); font-size: 24px; }
+.mine-progressions { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.mine-progression { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px; border: 1.5px solid var(--line); border-radius: 16px; background: var(--panel); }
+.mine-prog-info { min-width: 0; }
+.mine-prog-info h3 { margin: 0; font-size: 18px; overflow-wrap: anywhere; }
+.mine-prog-info p { margin: 2px 0; font-size: 16px; font-weight: 800; overflow-wrap: anywhere; }
+.mine-prog-info small { color: var(--mute); font-size: 12px; }
+.mine-prog-actions, .mine-row-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 5px; }
+.mine-prog-actions button { min-height: 38px; padding: 0 10px; font-size: 13px; font-weight: 700; }
+.mine-backup { flex-direction: row; flex-wrap: wrap; padding-top: 4px; }
+.mine-editor { display: flex; flex-direction: column; gap: 14px; padding: 16px; border: 1.5px solid var(--line); border-radius: 18px; background: var(--panel); }
+.mine-editor > h2 { margin: 0; font-size: 23px; }
+.mine-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.mine-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; color: var(--mute); font-size: 13px; font-weight: 700; }
+.mine-field input, .mine-field select { width: 100%; min-height: 44px; padding: 0 10px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink); }
+.mine-editor-chords { display: flex; flex-direction: column; gap: 8px; }
+.mine-editor-chords h3 { margin: 0; font-size: 17px; }
+.mine-chord-list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.mine-chord-list li { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 3px 6px 3px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); }
+.mine-chord-list li > b { min-width: 50px; font-size: 18px; }
+.mine-row-actions { margin-left: auto; }
+.mine-row-actions button { width: 40px; min-height: 40px; padding: 0; }
+.mine-row-actions .mine-remove { color: var(--mute); font-size: 22px; }
+.mine-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.mine-error { margin: 0; color: #b42318; font-size: 14px; font-weight: 700; }
+.mine-confirm-backdrop { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgb(0 0 0 / .48); }
+.mine-confirm { width: min(440px, 100%); padding: 20px; border-radius: 18px; background: var(--bg); box-shadow: 0 18px 60px rgb(0 0 0 / .25); }
+.mine-confirm h2 { margin: 0 0 10px; font-size: 20px; }
+.mine-confirm p { color: var(--mute); }
+.mine-danger { background: #b42318; border-color: #b42318; color: white; font-weight: 800; }
+.mine-toast { position: fixed; z-index: 55; inset: auto 16px calc(var(--nav-h) + var(--safe-b) + 12px); max-width: 600px; margin: 0 auto; padding: 12px 16px; border-radius: 14px; background: var(--ink); color: var(--bg); font-weight: 700; box-shadow: 0 8px 28px rgb(0 0 0 / .2); }
+.settings-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding: 8px 0; }
+.settings-field { display: flex; flex-direction: column; gap: 5px; color: var(--mute); font-size: 13px; font-weight: 700; }
+.settings-field select { width: 100%; min-height: 46px; padding: 0 10px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--ink); }
+.settings-toggle { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 46px; color: var(--mute); font-size: 13px; font-weight: 700; }
+.settings-toggle input { width: 22px; height: 22px; accent-color: var(--ink); }
+
+@media (max-width: 600px) {
+  .mine-title { align-items: flex-start; flex-direction: column; }
+  .mine-fields { grid-template-columns: 1fr 1fr; }
+  .mine-fields .mine-field:last-child { grid-column: 1 / -1; }
+  .mine-progression { align-items: stretch; flex-direction: column; }
+  .mine-prog-actions { justify-content: flex-start; }
+  .settings-form { grid-template-columns: 1fr; }
+}
