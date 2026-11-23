@@ -76,4 +76,41 @@ describe('Scheduler', () => {
     s.sch.stop()
     expect(s.active()).toBe(false)
   })
+
+  test('start() desde onEvent no deja temporizadores huérfanos ni sigue con la línea vieja', () => {
+    let t = 0
+    const live = new Set<number>()
+    let id = 0
+    const fns = new Map<number, () => void>()
+    const sch = new Scheduler({
+      now: () => t,
+      setTimer: (f) => { const h = ++id; live.add(h); fns.set(h, () => { live.delete(h); f() }); return h },
+      clearTimer: (h) => { live.delete(h as number); fns.delete(h as number) },
+    })
+    const fire = () => { for (const h of [...live]) fns.get(h)?.() }
+    const tlA = buildTimeline([{ chord: C, beats: 4 }], '4/4', 0)
+    const tlB = buildTimeline([{ chord: C, beats: 4 }], '3/4', 0)
+    const got: string[] = []
+    let restarted = false
+    const onB = (e: TimelineEvent) => got.push(`B:${e.kind}`)
+    const onA = (e: TimelineEvent) => {
+      got.push(`A:${e.kind}`)
+      if (!restarted) { restarted = true; sch.start(tlB, 120, onB, 0) }
+    }
+    sch.start(tlA, 120, onA, 0)
+    expect(live.size).toBe(1)
+    expect(got.filter((x) => x.startsWith('A'))).toHaveLength(1)
+    for (let n = 0; n < 40; n++) { t += 0.025; fire(); expect(live.size).toBe(1) }
+    expect(got.filter((x) => x.startsWith('A'))).toHaveLength(1)
+  })
+
+  test('stop() desde onEvent no emite más eventos en ese tick', () => {
+    const s = setup()
+    const tl = buildTimeline([{ chord: C, beats: 4 }], '4/4', 0)
+    let n = 0
+    // chord + clic del tiempo 0 caen en el mismo tick: tras parar en el primero no sale el segundo
+    s.sch.start(tl, 120, () => { n++; s.sch.stop() }, 0)
+    expect(n).toBe(1)
+    expect(s.active()).toBe(false)
+  })
 })

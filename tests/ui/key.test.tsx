@@ -48,11 +48,11 @@ describe('pantalla Tonalidad', () => {
     const pop = screen.getByText(/^Pop/).closest('li') as HTMLElement
     await user.click(within(pop).getByRole('button', { name: /Practicar/ }))
     expect(window.location.hash).toBe('#/practicar')
-    const src = takePendingPracticeSource()
-    expect(src).toMatchObject({ kind: 'preset', presetId: 'pop', chordSet: 'sevenths' })
-    expect(src && src.kind === 'preset' && src.key).toEqual({ tonic: 'G', mode: 'maj' })
-    if (src?.kind !== 'preset') throw new Error('preset expected')
-    const pre = PRESETS[src.key.mode].find((p) => p.id === src.presetId)!
-    expect(pre.degrees.map((d) => diatonic(src.key, src.chordSet)[d].spec)).toHaveLength(4)
+    // Practicar consume el traspaso al montar y muestra los 4 acordes (séptimas en G mayor)
+    expect(takePendingPracticeSource()).toBeNull()
+    const list = screen.getByTestId('practice-chords')
+    const want = PRESETS.maj.find((p) => p.id === 'pop')!.degrees.map((d) => diatonic({ tonic: 'G', mode: 'maj' }, 'sevenths')[d].spec)
+    expect(want).toHaveLength(4)
+    expect(within(list).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Solmaj7', 'Re7', 'Mim7', 'Domaj7'])
   })
 })

@@ -28,6 +28,8 @@ export class Scheduler {
   private prevAt = 0
   private prevBeat = 0
   private done = false
+  // sube en cada start/stop: un tick cuyo onEvent reinicia o para el planificador se retira
+  private gen = 0
 
   constructor(private deps: SchedulerDeps) {
     this.lookaheadMs = deps.lookaheadMs ?? 25
@@ -53,6 +55,7 @@ export class Scheduler {
   }
 
   stop(): void {
+    this.gen++
     this.running = false
     if (this.timer !== null) this.deps.clearTimer(this.timer)
     this.timer = null
@@ -86,6 +89,7 @@ export class Scheduler {
 
   private tick = (): void => {
     if (!this.running) return
+    const gen = this.gen
     const now = this.deps.now()
     let cur = this.current()
     // salto (pestaña oculta): avanzar sin emitir hasta el siguiente tiempo >= now
@@ -105,6 +109,7 @@ export class Scheduler {
       const loop = this.loop
       this.advance()
       this.onEvent(cur.e, at, loop)
+      if (this.gen !== gen) return // onEvent llamó a start()/stop(): ese ciclo ya no es nuestro
       cur = this.current()
     }
     if (this.running) this.timer = this.deps.setTimer(this.tick, this.lookaheadMs)
