@@ -26,6 +26,7 @@ export function KeyScreen() {
   const sig = keySignature(key)
   const sigText = sig.type === 'none' ? m.sig0 : sig.type === 'sharp' ? m.sharps(sig.count) : m.flats(sig.count)
   const sc = scaleOf(key)
+  const current = diatonic(key, chordSet)
   const [left, right] = circleNeighbours(key)
   const keyName = `${nn(key.tonic)} ${maj ? m.major : m.minor}`
   const relative = maj ? `${nn(relativeMinor(key))}m` : nn(relativeMajor(key))
@@ -43,7 +44,7 @@ export function KeyScreen() {
     go('chords')
   }
   const hear = (p: PresetProgression) => {
-    const chords = p.degrees.map((d) => buildChord(diatonic(key, chordSet)[d].spec))
+    const chords = p.degrees.map((d) => buildChord(current[d].spec))
     play(chainVoicings(chords, inst, capo), 0.9)
   }
   const practise = (p: PresetProgression) => {
@@ -117,7 +118,7 @@ export function KeyScreen() {
                     <small>
                       {name} · {p.roman}
                     </small>
-                    <b>{p.degrees.map((d) => chordSymbol(diatonic(key, chordSet)[d].spec, notation)).join(' · ')}</b>
+                    <b>{p.degrees.map((d) => chordSymbol(current[d].spec, notation)).join(' · ')}</b>
                   </div>
                   <button type="button" className="prog-play" aria-label={`${m.listen} ${name}`} onClick={() => hear(p)}>
                     ▶

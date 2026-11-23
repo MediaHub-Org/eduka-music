@@ -3,6 +3,7 @@ import { act, cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../../src/App'
 import { resetStore, useStore } from '../../src/state/store'
+import { PRESETS, diatonic } from '../../src/engine'
 import { takePendingPracticeSource } from '../../src/ui/practice/source'
 
 beforeEach(() => {
@@ -50,5 +51,8 @@ describe('pantalla Tonalidad', () => {
     const src = takePendingPracticeSource()
     expect(src).toMatchObject({ kind: 'preset', presetId: 'pop', chordSet: 'sevenths' })
     expect(src && src.kind === 'preset' && src.key).toEqual({ tonic: 'G', mode: 'maj' })
+    if (src?.kind !== 'preset') throw new Error('preset expected')
+    const pre = PRESETS[src.key.mode].find((p) => p.id === src.presetId)!
+    expect(pre.degrees.map((d) => diatonic(src.key, src.chordSet)[d].spec)).toHaveLength(4)
   })
 })
