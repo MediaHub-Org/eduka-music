@@ -11,6 +11,7 @@ import {
   difficulty,
   libraryVariants,
   positionKey,
+  stepPositions,
   topPositions,
   tuningWithCapo,
 } from '../../src/engine/positions'
@@ -61,6 +62,28 @@ describe('positions', () => {
     const [first] = allPositions(buildChord({ root: 'C', quality: 'maj' }), 'guitar', 0)
     if (first.kind !== 'frets') throw new Error('frets')
     expect(difficulty(first)).toBe('easy')
+  })
+
+  test('stepPositions: pocas formas, la mejor primero y repartidas por el mástil', () => {
+    const region = (p: Position) => {
+      if (p.kind !== 'frets') return 0
+      const f = p.frets.filter((x): x is number => x != null && x > 0)
+      return f.length ? Math.min(...f) : 0
+    }
+    for (const inst of ['guitar', 'ukulele', 'bandurria'] as const)
+      for (const root of ['C', 'E', 'F#', 'Bb'])
+        for (const q of ['maj', 'm', '7', 'm7', 'maj7', 'dim'] as const) {
+          const c = buildChord({ root, quality: q })
+          const all = allPositions(c, inst, 0)
+          const steps = stepPositions(c, inst, 0)
+          expect(steps.length).toBeLessThanOrEqual(5)
+          expect(steps.length).toBeGreaterThan(0)
+          expect(positionKey(steps[0])).toBe(positionKey(all[0]))
+          const keys = new Set(all.map(positionKey))
+          steps.forEach((p) => expect(keys.has(positionKey(p))).toBe(true))
+          for (let i = 0; i < steps.length; i++)
+            for (let j = i + 1; j < steps.length; j++) expect(Math.abs(region(steps[i]) - region(steps[j]))).toBeGreaterThanOrEqual(3)
+        }
   })
 
   test('libraryVariants devuelve entre 1 y 4 posiciones', () => {

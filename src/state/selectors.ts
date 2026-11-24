@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { Chord, ChordSpec, Direction, InstrumentId, KeyPosition, Position } from '../engine'
-import { INSTRUMENTS, allPositions, buildChord, nearestPosition, nextChord, positionKey, sameChord, topPositions } from '../engine'
+import { INSTRUMENTS, allPositions, buildChord, nearestPosition, nextChord, positionKey, sameChord, stepPositions } from '../engine'
 import type { AppState } from './store'
 import { useStore } from './store'
 
@@ -45,9 +45,9 @@ export function resolvePosition(c: Chord, inst: InstrumentId, capo: number, key:
   return null
 }
 
-/** `topPositions` + la seleccionada si no está entre ellas. */
+/** `stepPositions` + la seleccionada si no está entre ellas (p. ej. la más cercana al acorde anterior). */
 export function positionListFor(c: Chord, inst: InstrumentId, capo: number, key: string | null): Position[] {
-  const top = topPositions(c, inst, capo)
+  const top = stepPositions(c, inst, capo)
   const sel = resolvePosition(c, inst, capo, key)
   if (!sel || top.some((p) => positionKey(p) === key)) return top
   return [...top, sel]

@@ -111,10 +111,12 @@ function evalPos(fr: (number | null)[], c: Chord, inst: StringInstrument, capo: 
 
 const posCache = new Map<string, Position[]>()
 const topCache = new Map<string, Position[]>()
+const stepCache = new Map<string, Position[]>()
 
 export function clearPositionCache(): void {
   posCache.clear()
   topCache.clear()
+  stepCache.clear()
 }
 
 const cacheKey = (c: Chord, inst: InstrumentId, capo: number): string =>
@@ -285,35 +287,61 @@ export function topPositions(c: Chord, inst: InstrumentId, capo: number): Positi
   return r
 }
 
-/** Más de 4 formas por acorde no aportan: se ofrecen las mejores. */
+/** Un guitarrista usa ~3 formas de un acorde a lo largo del mástil; algunas más pueden venir bien. */
+export const MAX_POSITIONS = 5
+/** En la biblioteca (tarjetas pequeñas) basta con menos. */
 export const MAX_VARIANTS = 4
+/** Dos formas cuentan como distintas si empiezan al menos a tantos trastes de distancia. */
+const MIN_APART = 3
+
+/** Primer traste pisado (0 si es todo cuerdas al aire): dónde "vive" la forma en el mástil. */
+const neckRegion = (p: FretPosition): number => {
+  const f = p.frets.filter((x): x is number => x != null && x > 0)
+  return f.length ? Math.min(...f) : 0
+}
+
+/** `p` es `q` con alguna cuerda menos (mismos trastes en las que suenan). */
+const isSubShape = (p: FretPosition, q: FretPosition): boolean => {
+  const played = p.frets.map((f, i) => (f != null ? i : -1)).filter((i) => i >= 0)
+  const other = q.frets.filter((f) => f != null).length
+  return played.length < other && played.every((i) => p.frets[i] === q.frets[i])
+}
+
+/**
+ * Las mejores formas repartidas por el mástil: la más fácil primero y, tras ella, las demás
+ * de abajo arriba. Sin repetir zona (≥ MIN_APART trastes) ni formas que son otra con cuerdas
+ * de menos, y sin ofrecer formas mucho más difíciles que la mejor cuando ya hay tres.
+ */
+function spread(all: FretPosition[], max: number): FretPosition[] {
+  if (!all.length) return []
+  const best = all[0].score
+  const out: FretPosition[] = []
+  for (const p of all) {
+    if (out.length >= max) break
+    if (out.length >= 3 && p.score > best + 5.5) break
+    if (out.some((q) => isSubShape(p, q) || Math.abs(neckRegion(p) - neckRegion(q)) < MIN_APART)) continue
+    out.push(p)
+  }
+  const [first, ...rest] = out
+  return [first, ...rest.sort((a, b) => neckRegion(a) - neckRegion(b))]
+}
+
+/** Lista del selector de posiciones (Acordes): corta y repartida por el mástil. */
+export function stepPositions(c: Chord, inst: InstrumentId, capo: number): Position[] {
+  if (INSTRUMENTS[inst].kind === 'piano') return allPositions(c, inst, capo)
+  const k = cacheKey(c, inst, capo)
+  let r = stepCache.get(k)
+  if (!r) {
+    r = spread(allPositions(c, inst, capo) as FretPosition[], MAX_POSITIONS)
+    stepCache.set(k, r)
+  }
+  return r
+}
 
 export function libraryVariants(c: Chord, inst: InstrumentId, capo: number): Position[] {
   const all = allPositions(c, inst, capo)
   if (INSTRUMENTS[inst].kind === 'piano') return all
-  if (!all.length) return []
-  const frets = all as FretPosition[]
-  const best = frets[0].score
-  const out: FretPosition[] = []
-  const pl = (p: FretPosition): number[] => {
-    const r: number[] = []
-    p.frets.forEach((f, i) => {
-      if (f != null) r.push(i)
-    })
-    return r
-  }
-  const sub = (p: FretPosition, q: FretPosition): boolean => {
-    const a = pl(p)
-    const b = pl(q)
-    return a.length < b.length && a.every((i) => p.frets[i] === q.frets[i])
-  }
-  for (const p of frets) {
-    if (out.length >= MAX_VARIANTS) break
-    if (p.score > best + 5.5 && out.length >= 3) break
-    if (out.some((q) => sub(p, q))) continue
-    out.push(p)
-  }
-  return out
+  return spread(all as FretPosition[], MAX_VARIANTS)
 }
 
 export function positionKey(p: Position): string {

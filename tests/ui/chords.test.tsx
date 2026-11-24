@@ -3,7 +3,7 @@ import { act, cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../../src/App'
 import { resetStore, useStore } from '../../src/state/store'
-import { buildChord, positionKey, topPositions } from '../../src/engine'
+import { buildChord, positionKey, stepPositions } from '../../src/engine'
 
 beforeEach(() => {
   resetStore()
@@ -95,7 +95,7 @@ describe('pantalla Acordes', () => {
 
   test('posición ▶ avanza positionKey', async () => {
     const { user } = setup()
-    const list = topPositions(buildChord({ root: 'E', quality: 'm7' }), 'guitar', 0)
+    const list = stepPositions(buildChord({ root: 'E', quality: 'm7' }), 'guitar', 0)
     expect(screen.getByText(`Posición 1 de ${list.length}`)).toBeInTheDocument()
     const i = 0
     await user.click(screen.getByRole('button', { name: 'Posición siguiente' }))

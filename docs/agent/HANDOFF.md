@@ -80,6 +80,7 @@ metronome/chord timing in real time (the owner's listening checklist from task
   strip, Siguiente/Atrás, the change panel, key suggestions and the `n`/`b` hotkeys.
   Picking a chord from Tonalidad turns it on.
 - Acordes has no search box (root/bass/quality grid cover it; search stays in Practicar and Mis cosas). Instrument chips carry an icon and are ordered by how often each was chosen (`eduka-music-instrument-use` in localStorage, order frozen while the picker is mounted).
+- Position stepper uses `stepPositions` (max 5, easiest first, then spread up the neck, >=3 frets apart); `topPositions` stays untouched because it is golden-tested against the artifact. Library cards use the same selection capped at 4.
 - Verified: typecheck, 2668 tests, build, e2e 8/8 (temporary port 4190).
 
 ## Next
