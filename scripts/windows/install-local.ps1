@@ -33,6 +33,10 @@ $server = Join-Path $repo 'server\serve.mjs'
 if (-not (Test-Path (Join-Path $repo 'dist\index.html'))) {
   throw "Falta dist\ en $repo. Ejecuta 'npm run build' primero."
 }
+$holder = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($holder) {
+  Write-Warning "El puerto $Port ya está ocupado (pid $($holder.OwningProcess)). Si es otra app, la tarea no podrá servir la PWA."
+}
 $nodeCmd = Get-Command node -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
 if (-not $nodeCmd) { throw 'No se encontró node en el PATH. Instala Node.js 20 o superior.' }
 $node = $nodeCmd.Source

@@ -9,18 +9,21 @@
  *
  *   npm start        ->  http://localhost:4174/eduka-music/
  *
- * Variables: PORT (4174), HOST (127.0.0.1). Solo escucha en loopback.
+ * Escucha en 127.0.0.1 y ::1 (y solo ahí): `localhost` puede resolver a
+ * cualquiera de los dos según la máquina.
+ * Variables: PORT (4174), HOST (fuerza una sola dirección).
  */
-import { createReadStream, statSync } from 'node:fs'
+import { createReadStream, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const REPO = path.resolve(fileURLToPath(new URL('..', import.meta.url)))
 const DIST = path.join(REPO, 'dist')
+const PID_FILE = path.join(REPO, '.serve.pid')
 const BASE = '/eduka-music/'
 const PORT = Number.parseInt(process.env.PORT ?? '4174', 10)
-const HOST = process.env.HOST ?? '127.0.0.1'
+const HOSTS = process.env.HOST ? [process.env.HOST] : ['127.0.0.1', '::1']
 
 const TYPES = new Map(Object.entries({
   '.html': 'text/html; charset=utf-8',
@@ -37,11 +40,6 @@ const TYPES = new Map(Object.entries({
   '.map': 'application/json; charset=utf-8',
 }))
 
-if (!safeStat(path.join(DIST, 'index.html'))) {
-  console.error(`No hay build en ${DIST}. Ejecuta "npm run build" primero.`)
-  process.exit(1)
-}
-
 function safeStat(file) {
   try {
     return statSync(file)
@@ -52,8 +50,7 @@ function safeStat(file) {
 
 /** El service worker y el manifest no se cachean; los assets llevan hash en el nombre. */
 function cacheControl(relative) {
-  if (relative.startsWith('assets/')) return 'public, max-age=31536000, immutable'
-  return 'no-cache'
+  return relative.startsWith('assets/') ? 'public, max-age=31536000, immutable' : 'no-cache'
 }
 
 function send(res, status, body, type = 'text/plain; charset=utf-8') {
@@ -70,7 +67,7 @@ function resolveFile(pathname) {
   return { file, relative }
 }
 
-const server = createServer((req, res) => {
+function handle(req, res) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     send(res, 405, 'Method not allowed')
     return
@@ -96,7 +93,7 @@ const server = createServer((req, res) => {
     return
   }
   if (!pathname.startsWith(BASE)) {
-    send(res, 404, `Esta app vive en ${BASE} -> http://${HOST}:${PORT}${BASE}\n`)
+    send(res, 404, `Esta app vive en ${BASE} -> http://localhost:${PORT}${BASE}\n`)
     return
   }
 
@@ -126,35 +123,67 @@ const server = createServer((req, res) => {
   }
 
   const ext = path.extname(file).toLowerCase()
-  const headers = {
+  res.writeHead(200, {
     'Content-Type': TYPES.get(ext) ?? 'application/octet-stream',
     'Content-Length': info.size,
     'Cache-Control': cacheControl(relative),
     'ETag': etag,
     'X-Content-Type-Options': 'nosniff',
-  }
-  res.writeHead(200, headers)
+  })
   if (req.method === 'HEAD') {
     res.end()
     return
   }
   createReadStream(file).on('error', () => res.destroy()).pipe(res)
-})
+}
 
-server.on('error', (error) => {
-  if (error.code === 'EADDRINUSE') {
-    console.error(`El puerto ${PORT} ya está en uso. Cierra lo que lo ocupa o usa PORT=<otro> npm start.`)
-    process.exit(1)
-  }
-  console.error(error)
+if (!safeStat(path.join(DIST, 'index.html'))) {
+  console.error(`No hay build en ${DIST}. Ejecuta "npm run build" primero.`)
   process.exit(1)
-})
+}
 
-server.listen(PORT, HOST, () => {
-  console.log(`Eduka Music -> http://localhost:${PORT}${BASE}`)
-  console.log(`  sirviendo ${DIST}`)
-})
+const servers = []
+let listening = 0
+
+for (const host of HOSTS) {
+  const server = createServer(handle)
+  server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+      console.error(`El puerto ${PORT} ya está en uso en ${host}. Cierra lo que lo ocupa o usa PORT=<otro> npm start.`)
+      process.exit(1)
+    }
+    // IPv6 puede no estar disponible: con IPv4 basta.
+    if (host === '::1' && (error.code === 'EAFNOSUPPORT' || error.code === 'EADDRNOTAVAIL')) {
+      console.warn(`Aviso: sin loopback IPv6 (${error.code}); solo 127.0.0.1.`)
+      return
+    }
+    console.error(error)
+    process.exit(1)
+  })
+  server.listen(PORT, host, () => {
+    listening += 1
+    if (listening === 1) {
+      // El desinstalador necesita una forma fiable de encontrar este proceso
+      // aunque se lanzara con una ruta relativa.
+      writeFileSync(PID_FILE, String(process.pid))
+      console.log(`Eduka Music -> http://localhost:${PORT}${BASE}`)
+      console.log(`  sirviendo ${DIST}`)
+    }
+  })
+  servers.push(server)
+}
+
+function cleanup() {
+  try {
+    unlinkSync(PID_FILE)
+  } catch {}
+}
+process.on('exit', cleanup)
 
 for (const signal of ['SIGINT', 'SIGTERM']) {
-  process.on(signal, () => server.close(() => process.exit(0)))
+  process.on(signal, () => {
+    for (const server of servers) server.close()
+    cleanup()
+    process.exit(0)
+  })
 }

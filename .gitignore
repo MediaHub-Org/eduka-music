@@ -11,5 +11,8 @@ coverage/
 docs/reference/
 docs/superpowers/
 
+# pid del servidor local
+.serve.pid
+
 .DS_Store
 *.tsbuildinfo
