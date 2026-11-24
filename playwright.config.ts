@@ -9,7 +9,7 @@ export default defineConfig({
   fullyParallel: true,
   reporter: 'list',
   use: {
-    baseURL: 'http://127.0.0.1:4173',
+    baseURL: 'http://127.0.0.1:4174/eduka-music/',
     trace: 'retain-on-failure',
     launchOptions,
   },
@@ -23,9 +23,10 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], launchOptions },
     },
   ],
+  // El mismo servidor que usa la app instalada en local, no `vite preview`.
   webServer: {
-    command: 'npm run build && npm run preview -- --host 127.0.0.1',
-    url: 'http://127.0.0.1:4173',
+    command: 'npm run build && npm start',
+    url: 'http://127.0.0.1:4174/eduka-music/',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

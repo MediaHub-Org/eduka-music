@@ -1,8 +1,14 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import pkg from './package.json'
+
+// Misma ruta en local y en GitHub Pages: lo que se prueba es lo que se despliega.
+const BASE = '/eduka-music/'
 
 export default defineConfig({
+  base: BASE,
+  define: { __APP_VERSION__: JSON.stringify(pkg.version) },
   plugins: [
     react(),
     VitePWA({
@@ -13,6 +19,8 @@ export default defineConfig({
         short_name: 'Eduka Music',
         description: 'Acordes, tonalidades y práctica musical.',
         lang: 'es',
+        start_url: BASE,
+        scope: BASE,
         display: 'standalone',
         orientation: 'any',
         theme_color: '#ffffff',
