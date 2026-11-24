@@ -39,6 +39,19 @@ describe('Ajustes', () => {
     expect(within(dialog).getByLabelText('Notas')).toBeInTheDocument()
   })
 
+  test('muestra versión, licencia y enlace al código fuente', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
+    const dialog = screen.getByRole('dialog', { name: 'Ajustes' })
+
+    expect(within(dialog).getByText(/^Eduka Music \d+\.\d+\.\d+$/)).toBeInTheDocument()
+    expect(within(dialog).getByRole('link', { name: 'Código fuente' }))
+      .toHaveAttribute('href', 'https://github.com/MediaHub-Org/eduka-music')
+    expect(within(dialog).getByRole('link', { name: 'AGPL-3.0' }))
+      .toHaveAttribute('href', 'https://github.com/MediaHub-Org/eduka-music/blob/main/LICENSE')
+  })
+
   test('el tema se aplica al documento: oscuro, claro y automático', async () => {
     const user = userEvent.setup()
     render(<App />)

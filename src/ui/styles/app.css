@@ -573,6 +573,8 @@ button:disabled { opacity: 0.4; cursor: default; }
 .settings-wide { grid-column: 1 / -1; margin: 0; }
 .settings-toggle { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 46px; color: var(--mute); font-size: 13px; font-weight: 700; }
 .settings-toggle input { width: 22px; height: 22px; accent-color: var(--ink); }
+.settings-about { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding-top: 12px; border-top: 1px solid var(--line); color: var(--mute); font-size: 12px; font-weight: 700; }
+.settings-about a { color: var(--ink); text-underline-offset: 2px; }
 
 @media (max-width: 600px) {
   .mine-title { align-items: flex-start; flex-direction: column; }

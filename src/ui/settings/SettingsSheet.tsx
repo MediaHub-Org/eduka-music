@@ -3,6 +3,7 @@ import { useStore } from '../../state/store'
 import type { Settings } from '../../state/store'
 
 const THEMES: Settings['theme'][] = ['auto', 'light', 'dark']
+const SOURCE_URL = 'https://github.com/MediaHub-Org/eduka-music'
 
 /** Ajustes: solo lo que se toca una vez (idioma, notación, tema). Lo de uso diario vive en Acordes. */
 export function SettingsSheet() {
@@ -38,6 +39,12 @@ export function SettingsSheet() {
         </div>
       </div>
       <p className="note settings-wide">{m.settingsHint}</p>
+      {/* La AGPL exige ofrecer el código a quien usa la app por red. */}
+      <p className="settings-about settings-wide">
+        <span>Eduka Music {__APP_VERSION__}</span>
+        <a href={SOURCE_URL} target="_blank" rel="noreferrer">{m.sourceCode}</a>
+        <a href={`${SOURCE_URL}/blob/main/LICENSE`} target="_blank" rel="noreferrer">AGPL-3.0</a>
+      </p>
     </div>
   )
 }
