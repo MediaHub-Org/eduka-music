@@ -24,7 +24,6 @@ import { ChordLibrary } from './ChordLibrary'
 import { InstrumentBar } from './InstrumentBar'
 import { KeyStrip } from './KeyStrip'
 import { LabelsToggle, ListenButton, PositionStepper } from './PositionStepper'
-import { SearchBox } from './SearchBox'
 import { play, useChordActions } from './useChordActions'
 
 /** Ancho del contenedor con ResizeObserver (0 hasta medir). */
@@ -44,7 +43,7 @@ function useWidth<T extends HTMLElement>(): [RefObject<T | null>, number] {
 
 /**
  * Móvil: si al cambiar de posición o de acorde los puntos elegidos quedan tapados (bajo la
- * barra del pulgar o sobre el buscador), desplaza la página lo justo. No actúa al montar.
+ * barra del pulgar o fuera de pantalla por arriba), desplaza la página lo justo. No actúa al montar.
  */
 function useKeepPositionVisible(stage: RefObject<HTMLDivElement | null>, key: string | null, spec: object) {
   const first = useRef(true)
@@ -59,7 +58,7 @@ function useKeepPositionVisible(stage: RefObject<HTMLDivElement | null>, key: st
     if (!dots.length) return
     const top = Math.min(...dots.map((r) => r.top)) - 16
     const bottom = Math.max(...dots.map((r) => r.bottom)) + 16
-    const minY = document.querySelector('.top')?.getBoundingClientRect().bottom ?? 0
+    const minY = 0
     const maxY = document.querySelector('.dock')?.getBoundingClientRect().top ?? window.innerHeight
     let dy = 0
     if (bottom > maxY) dy = bottom - maxY
@@ -82,7 +81,6 @@ export function ChordsScreen({ hotkeys = true }: { hotkeys?: boolean }) {
   const P: Position | null = list[idx] ?? null
   const fav = useStore(selectIsFavorite(chord.spec, P ? positionKey(P) : null))
   const nx = useNext()
-  const search = useRef<HTMLInputElement>(null)
   const [stage, stageW] = useWidth<HTMLDivElement>()
   const def = INSTRUMENTS[inst]
   const nn = (n: string) => displayNote(n, notation)
@@ -92,8 +90,7 @@ export function ChordsScreen({ hotkeys = true }: { hotkeys?: boolean }) {
   const suggestions = useKey && !nx.inKey ? keysContaining(chord.spec).slice(0, 3) : []
 
   const hero = useRef<HTMLElement>(null)
-  /** Tras buscar o elegir en la biblioteca: el nombre del acorde y el mástil a la vista. */
-  const toStage = () => hero.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
+  /** Tras elegir en la biblioteca: el nombre del acorde y el mástil a la vista. */
   const pickFromLibrary = useCallback(
     (spec: ChordSpec, p: Position) => {
       a.goTo(spec, p)
@@ -105,7 +102,6 @@ export function ChordsScreen({ hotkeys = true }: { hotkeys?: boolean }) {
 
   useHotkeys(
     {
-      '/': () => search.current?.focus(),
       ArrowLeft: () => a.stepPosition(-1),
       ArrowRight: () => a.stepPosition(1),
       ' ': () => a.listen(),
@@ -135,16 +131,6 @@ export function ChordsScreen({ hotkeys = true }: { hotkeys?: boolean }) {
 
   return (
     <div className="chords">
-      <div className="top">
-        <SearchBox
-          ref={search}
-          onPick={(spec) => {
-            a.pickBest(spec)
-            toStage()
-          }}
-        />
-      </div>
-
       <InstrumentBar />
 
       {useKey && <KeyStrip next={nx.inKey ? nx.spec : null} onPick={a.goTo} onSet={a.switchSet} />}

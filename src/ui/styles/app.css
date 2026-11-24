@@ -113,16 +113,6 @@ button:disabled { opacity: 0.4; cursor: default; }
 /* ---------- pantalla Acordes (móvil) ---------- */
 .chords { display: flex; flex-direction: column; gap: 12px; max-width: 1180px; margin: 0 auto; }
 
-.top {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  margin: 0 calc(-1 * var(--gut));
-  padding: 8px var(--gut);
-  background: color-mix(in srgb, var(--bg) 94%, transparent);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
 .search { position: relative; }
 .search-ico { position: absolute; left: 14px; top: 50%; translate: 0 -50%; color: var(--mute); display: flex; pointer-events: none; }
 .search input {
@@ -167,10 +157,11 @@ button:disabled { opacity: 0.4; cursor: default; }
 .search-res .search-none { color: var(--mute); cursor: default; }
 
 /* instrumento y opciones de uso diario */
-.ibar { display: flex; flex-direction: column; gap: 8px; }
+.ibar { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; }
 .inst-pick { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
 .inst-pick::-webkit-scrollbar { display: none; }
-.inst-pick button { flex: 0 0 auto; min-height: 44px; padding: 0 14px; border-radius: 999px; font-weight: 700; white-space: nowrap; }
+.inst-pick button { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 0 14px 0 10px; border-radius: 999px; font-weight: 700; white-space: nowrap; }
+.inst-pick svg { flex: none; }
 .inst-pick button.on, .ibar .opt.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 .ibar-opts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .ibar .opt { min-height: 40px; padding: 0 14px; border-radius: 999px; font-size: 14px; font-weight: 700; }
@@ -241,7 +232,7 @@ button:disabled { opacity: 0.4; cursor: default; }
 /* instrumento */
 .stage.vert svg { max-width: 300px !important; }
 .stage { background: var(--wood); border: 1.5px solid var(--line); border-radius: 16px; padding: 8px; }
-.hero { scroll-margin-top: 76px; }
+.hero { scroll-margin-top: 12px; }
 .stage svg { display: block; width: 100%; height: auto; margin: 0 auto; }
 .nopos { margin: 0; padding: 48px 16px; text-align: center; color: var(--mute); font-weight: 700; }
 .inst-note { margin-top: -4px; }
@@ -376,7 +367,6 @@ button:disabled { opacity: 0.4; cursor: default; }
     display: grid;
     grid-template-columns: minmax(0, 1fr) 300px;
     grid-template-areas:
-      'top top'
       'ibar ibar'
       'strip strip'
       'hero hero'
@@ -384,13 +374,12 @@ button:disabled { opacity: 0.4; cursor: default; }
       'stage side'
       'inote side'
       'lib side';
-    grid-template-rows: auto auto auto auto auto auto auto 1fr;
+    grid-template-rows: auto auto auto auto auto auto 1fr;
     column-gap: 20px;
     row-gap: 12px;
     align-items: start;
   }
-  .top { grid-area: top; padding-top: 14px; }
-  .ibar { grid-area: ibar; }
+  .ibar { grid-area: ibar; padding-top: 14px; }
   .strip { grid-area: strip; }
   .hero { grid-area: hero; margin-top: 8px; }
   .tones-row { grid-area: tones; }

@@ -32,13 +32,6 @@ export function chordActions() {
     play([p])
   }
 
-  /** Acorde buscado: su mejor posición (índice 0), como un acorde nuevo. */
-  const pickBest = (spec: ChordSpec) => {
-    const s = st()
-    s.selectChord(spec, null)
-    play([positionListFor(buildChord(spec), s.current.instrument, selectCapo(s), null)[0] ?? null])
-  }
-
   /** Avanza (+1) o retrocede (-1) en la lista de posiciones y la toca. */
   const stepPosition = (d: 1 | -1) => {
     const s = st()
@@ -88,7 +81,7 @@ export function chordActions() {
     if (!nextChord(chord, k, chordSet, 'down').inKey && nextChord(chord, k, other, 'down').inKey) s.setChordSet(other)
   }
 
-  return { goTo, pickBest, adoptKey, stepPosition, listen, next, back, toggleFavorite, switchSet }
+  return { goTo, adoptKey, stepPosition, listen, next, back, toggleFavorite, switchSet }
 }
 
 export function useChordActions() {

@@ -1,16 +1,24 @@
-import { INSTRUMENT_ORDER, INSTRUMENTS } from '../../engine'
+import { useState } from 'react'
+import { INSTRUMENTS } from '../../engine'
 import { useT } from '../../i18n'
+import { instrumentsByUse } from '../../state/instrumentUse'
 import { useStore } from '../../state/store'
+import { InstrumentIcon } from './InstrumentIcon'
 
-/** Instrumento: fichas desplazables (se usa en Acordes y en Practicar). */
+/**
+ * Instrumento: fichas con icono, del más al menos usado (se usa en Acordes y en Practicar).
+ * El orden se fija al mostrarse: las fichas no se mueven al pulsar una.
+ */
 export function InstrumentPicker() {
   const m = useT()
   const inst = useStore((s) => s.current.instrument)
   const setInstrument = useStore((s) => s.setInstrument)
+  const [order] = useState(instrumentsByUse)
   return (
     <div className="inst-pick" role="group" aria-label={m.instrument}>
-      {INSTRUMENT_ORDER.map((id) => (
+      {order.map((id) => (
         <button key={id} type="button" className={id === inst ? 'on' : ''} aria-pressed={id === inst} onClick={() => id !== inst && setInstrument(id)}>
+          <InstrumentIcon id={id} />
           {m.inst[id]}
         </button>
       ))}

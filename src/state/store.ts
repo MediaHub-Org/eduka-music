@@ -1,6 +1,7 @@
 import { sameChord } from '../engine'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
+import { bumpInstrumentUse, clearInstrumentUse } from './instrumentUse'
 import { mergePersisted, migrateState, safeStorage } from './persist'
 import { STORE_NAME, STORE_VERSION, defaultData } from './types'
 import type { AppState, Favorite, PersistedState, SavedProgression } from './types'
@@ -20,7 +21,10 @@ export const useStore = create<AppState>()(
           const capoChanged = settings.capo !== s.settings.capo
           return { settings, current: capoChanged ? { ...s.current, positionKey: null } : s.current }
         }),
-      setInstrument: (instrument) => set((s) => ({ current: { ...s.current, instrument, positionKey: null } })),
+      setInstrument: (instrument) => {
+        if (instrument !== get().current.instrument) bumpInstrumentUse(instrument)
+        set((s) => ({ current: { ...s.current, instrument, positionKey: null } }))
+      },
       setKey: (key) => set((s) => ({ current: { ...s.current, key } })),
       setChordSet: (chordSet) => set((s) => ({ current: { ...s.current, chordSet } })),
       selectChord: (chord, positionKey = null) => set((s) => ({ current: { ...s.current, chord, positionKey } })),
@@ -87,6 +91,7 @@ export const useStore = create<AppState>()(
 /** Test helper: vuelve a los valores por defecto y borra lo guardado. */
 export function resetStore(): void {
   useStore.setState(defaultData())
+  clearInstrumentUse()
   try {
     localStorage.removeItem(STORE_NAME)
   } catch {

@@ -15,10 +15,29 @@ const setup = (useKey = true) => {
   useStore.getState().setSettings({ useKey })
   const user = userEvent.setup()
   render(<App />)
-  return { user, search: screen.getByRole('searchbox') }
+  return { user }
 }
 
 describe('Acordes sin tonalidad (por defecto)', () => {
+  test('no hay buscador: se elige con la raíz, el bajo y la rejilla', async () => {
+    const { user } = setup(false)
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
+    const roots = screen.getByRole('group', { name: 'Raíz' })
+    await user.click(within(roots).getByRole('button', { name: 'Re' }))
+    expect(useStore.getState().current.chord).toEqual({ root: 'D', quality: 'm7' })
+  })
+
+  test('las fichas de instrumento van por uso y no se mueven al pulsar', async () => {
+    const { user } = setup(false)
+    const names = () => within(screen.getByRole('group', { name: 'Instrumento' })).getAllByRole('button').map((b) => b.textContent)
+    expect(names()).toEqual(['Guitarra', 'Piano', 'Ukelele', 'Cuatro venezolano', 'Timple', 'Bandurria'])
+    await user.click(screen.getByRole('button', { name: 'Timple' }))
+    expect(names()[4]).toBe('Timple')
+    cleanup()
+    setup(false)
+    expect(names()[0]).toBe('Timple')
+  })
+
   test('no hay tira, Siguiente ni panel de cambio; el interruptor los muestra', async () => {
     const { user } = setup(false)
     expect(screen.queryByRole('button', { name: /Siguiente|Variante ▶/ })).not.toBeInTheDocument()
@@ -44,23 +63,13 @@ describe('Acordes sin tonalidad (por defecto)', () => {
 })
 
 describe('pantalla Acordes', () => {
-  test('buscar "re/fa#" + Enter selecciona D/F#', async () => {
-    const { user, search } = setup()
-    await user.type(search, 're/fa#{Enter}')
+  test('raíz y bajo de la biblioteca: Re con bajo Fa♯ → D/F♯', async () => {
+    const { user } = setup()
+    act(() => useStore.getState().selectChord({ root: 'D', quality: 'maj' }))
+    const bassRow = screen.getByRole('group', { name: /Bajo/ })
+    await user.click(within(bassRow).getByRole('button', { name: 'Fa♯' }))
     expect(useStore.getState().current.chord).toEqual({ root: 'D', quality: 'maj', bass: 'F#' })
     expect(screen.getByTestId('chord-symbol')).toHaveTextContent('Re/Fa♯')
-    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
-  })
-
-  test('el buscador muestra resultados con nombre largo y se elige tocando', async () => {
-    const { user, search } = setup()
-    await user.type(search, 'sol7')
-    const list = screen.getByRole('listbox')
-    const opt = within(list).getAllByRole('option')[0]
-    expect(opt).toHaveTextContent('Sol7')
-    expect(opt).toHaveTextContent('séptima de dominante')
-    await user.click(opt)
-    expect(useStore.getState().current.chord).toEqual({ root: 'G', quality: '7' })
   })
 
   test('Siguiente desde Em7 en G → Cmaj7', async () => {
@@ -93,13 +102,6 @@ describe('pantalla Acordes', () => {
     const j = (i + 1) % list.length
     expect(useStore.getState().current.positionKey).toBe(positionKey(list[j]))
     expect(screen.getByText(`Posición ${j + 1} de ${list.length}`)).toBeInTheDocument()
-  })
-
-  test('tecla "/" enfoca el buscador', async () => {
-    const { user, search } = setup()
-    await user.keyboard('/')
-    expect(search).toHaveFocus()
-    expect(search).toHaveValue('')
   })
 
   test('atajos: → posición, f favorito, n siguiente', async () => {
@@ -176,16 +178,14 @@ describe('teclado sin choques', () => {
     expect(useStore.getState().current.direction).toBe('variant')
   })
 
-  test('escribir en el buscador no dispara atajos', async () => {
-    const { user, search } = setup()
+  test('escribir en un campo de la pantalla no dispara atajos (la cejilla es un select)', async () => {
+    const { user } = setup()
     const k0 = useStore.getState().current.positionKey
-    await user.type(search, 'fa sib n b re/fa#')
-    await user.keyboard('{ArrowLeft}{ArrowRight}')
-    const st = useStore.getState()
-    expect(st.favorites).toHaveLength(0)
-    expect(st.current.positionKey).toBe(k0)
-    expect(st.current.chord).toEqual({ root: 'E', quality: 'm7' })
-    expect(search).toHaveValue('fa sib n b re/fa#')
+    screen.getByLabelText('Cejilla').focus()
+    await user.keyboard('fnb')
+    expect(useStore.getState().favorites).toHaveLength(0)
+    expect(useStore.getState().current.positionKey).toBe(k0)
+    expect(useStore.getState().current.chord).toEqual({ root: 'E', quality: 'm7' })
   })
 })
 

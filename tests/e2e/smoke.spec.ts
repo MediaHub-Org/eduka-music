@@ -2,9 +2,10 @@ import { expect, test } from '@playwright/test'
 
 test('flujo principal', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('searchbox').fill('re/fa#')
-  await page.keyboard.press('Enter')
-  await expect(page.getByTestId('chord-symbol')).toHaveText(/^Re\/Fa[#♯]$/)
+  await expect(page.getByRole('searchbox')).toHaveCount(0)
+  await page.getByRole('group', { name: 'Raíz' }).getByRole('button', { name: 'Re', exact: true }).click()
+  await page.getByRole('group', { name: 'Bajo' }).getByRole('button', { name: 'Fa♯' }).click()
+  await expect(page.getByTestId('chord-symbol')).toHaveText(/^Re(m7)?\/Fa[#♯]$/)
   await expect(page.getByRole('button', { name: /Siguiente|Variante/ })).toHaveCount(0)
   await page.getByRole('button', { name: 'Usar tonalidad' }).click()
   await page.getByRole('button', { name: /Siguiente|Variante/ }).click()
