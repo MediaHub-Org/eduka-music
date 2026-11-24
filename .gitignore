@@ -7,5 +7,9 @@ playwright-report/
 coverage/
 *.local
 
+# Material de trabajo y datos de referencia: no se publican.
+docs/reference/
+docs/superpowers/
+
 .DS_Store
 *.tsbuildinfo
