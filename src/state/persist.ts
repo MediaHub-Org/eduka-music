@@ -59,6 +59,8 @@ function cleanSettings(s: unknown): Partial<Settings> | null {
   if (isNum(s.capo)) out.capo = Math.min(7, Math.max(0, Math.round(s.capo)))
   if (typeof s.leftHanded === 'boolean') out.leftHanded = s.leftHanded
   if (s.labels === 'notes' || s.labels === 'intervals') out.labels = s.labels
+  if (s.theme === 'auto' || s.theme === 'light' || s.theme === 'dark') out.theme = s.theme
+  if (typeof s.useKey === 'boolean') out.useKey = s.useKey
   return out
 }
 

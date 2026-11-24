@@ -63,10 +63,10 @@ describe('positions', () => {
     expect(difficulty(first)).toBe('easy')
   })
 
-  test('libraryVariants devuelve entre 1 y 10 posiciones', () => {
+  test('libraryVariants devuelve entre 1 y 4 posiciones', () => {
     const v = libraryVariants(buildChord({ root: 'A', quality: 'm7' }), 'guitar', 0)
     expect(v.length).toBeGreaterThan(0)
-    expect(v.length).toBeLessThanOrEqual(10)
+    expect(v.length).toBeLessThanOrEqual(4)
     expect(libraryVariants(buildChord({ root: 'C', quality: 'maj' }), 'piano', 0)).toHaveLength(3)
   })
 })

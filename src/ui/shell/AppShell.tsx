@@ -19,6 +19,15 @@ export function AppShell() {
   useEffect(() => {
     document.documentElement.lang = lang
   }, [lang])
+  const theme = useStore((s) => s.settings.theme)
+  useEffect(() => {
+    const root = document.documentElement
+    if (theme === 'auto') root.removeAttribute('data-theme')
+    else root.setAttribute('data-theme', theme)
+    // la barra del navegador/PWA sigue al tema elegido (o al del sistema)
+    const dark = theme === 'dark' || (theme === 'auto' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#111214' : '#ffffff')
+  }, [theme])
   useEffect(() => {
     window.scrollTo?.(0, 0)
   }, [route])

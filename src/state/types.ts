@@ -6,6 +6,10 @@ export interface Settings {
   capo: number
   leftHanded: boolean
   labels: 'notes' | 'intervals'
+  /** Tema: 'auto' sigue al sistema. */
+  theme: 'auto' | 'light' | 'dark'
+  /** Acordes muestra la tira de tonalidad, "Siguiente" y el panel de cambio. */
+  useKey: boolean
 }
 export interface Current {
   instrument: InstrumentId
@@ -69,7 +73,7 @@ export const STORE_VERSION = 1
 
 export function defaultData(): PersistedState {
   return {
-    settings: { lang: 'es', notation: 'latin', capo: 0, leftHanded: false, labels: 'notes' },
+    settings: { lang: 'es', notation: 'latin', capo: 0, leftHanded: false, labels: 'notes', theme: 'auto', useKey: false },
     current: {
       instrument: 'guitar',
       key: { tonic: 'G', mode: 'maj' },

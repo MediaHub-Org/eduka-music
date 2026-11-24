@@ -7,6 +7,13 @@
     <meta name="description" content="Acordes, tonalidades y práctica musical con guitarra, piano y más." />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <title>Eduka Music</title>
+    <script>
+      // aplica el tema guardado antes de pintar (evita el parpadeo claro → oscuro)
+      try {
+        var t = JSON.parse(localStorage.getItem('eduka-music')).state.settings.theme
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t)
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -285,6 +285,9 @@ export function topPositions(c: Chord, inst: InstrumentId, capo: number): Positi
   return r
 }
 
+/** Más de 4 formas por acorde no aportan: se ofrecen las mejores. */
+export const MAX_VARIANTS = 4
+
 export function libraryVariants(c: Chord, inst: InstrumentId, capo: number): Position[] {
   const all = allPositions(c, inst, capo)
   if (INSTRUMENTS[inst].kind === 'piano') return all
@@ -305,7 +308,7 @@ export function libraryVariants(c: Chord, inst: InstrumentId, capo: number): Pos
     return a.length < b.length && a.every((i) => p.frets[i] === q.frets[i])
   }
   for (const p of frets) {
-    if (out.length >= 10) break
+    if (out.length >= MAX_VARIANTS) break
     if (p.score > best + 5.5 && out.length >= 3) break
     if (out.some((q) => sub(p, q))) continue
     out.push(p)

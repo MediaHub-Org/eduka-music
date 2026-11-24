@@ -40,6 +40,7 @@ export function KeyScreen() {
   }
   const pickChord = (set: ChordSet, spec: ChordSpec) => {
     useStore.getState().setChordSet(set)
+    useStore.getState().setSettings({ useKey: true })
     a.goTo(spec)
     go('chords')
   }

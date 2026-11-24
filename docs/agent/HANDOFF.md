@@ -69,6 +69,18 @@ metronome/chord timing in real time (the owner's listening checklist from task
 - PWA updates must not lose saved data: the store only migrates by schema
   version.
 
+## Post-v1 UX pass (2026-11-24)
+
+- Theme setting (auto/light/dark, `settings.theme`) applied via `data-theme`, with a
+  pre-paint script in `index.html`.
+- `libraryVariants` capped at 4 (`MAX_VARIANTS`).
+- Settings now only holds language, notation and theme. Instrument, capo and
+  left-handed live in `InstrumentBar` on Acordes (instrument also in Practicar).
+- Acordes is key-free by default; `settings.useKey` ("Usar tonalidad") shows the key
+  strip, Siguiente/Atrás, the change panel, key suggestions and the `n`/`b` hotkeys.
+  Picking a chord from Tonalidad turns it on.
+- Verified: typecheck, 2668 tests, build, e2e 8/8 (temporary port 4190).
+
 ## Next
 
 Nothing is half-done or uncommitted. v1 is closed; v2 (chord identification,

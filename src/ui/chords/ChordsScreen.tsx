@@ -21,6 +21,7 @@ import { Neck, toneLabel } from '../diagrams/Neck'
 import { useHotkeys } from '../shell/useHotkeys'
 import { ChangePanel } from './ChangePanel'
 import { ChordLibrary } from './ChordLibrary'
+import { InstrumentBar } from './InstrumentBar'
 import { KeyStrip } from './KeyStrip'
 import { LabelsToggle, ListenButton, PositionStepper } from './PositionStepper'
 import { SearchBox } from './SearchBox'
@@ -87,7 +88,8 @@ export function ChordsScreen({ hotkeys = true }: { hotkeys?: boolean }) {
   const nn = (n: string) => displayNote(n, notation)
   const symbol = chordSymbol(chord.spec, notation)
   const dirLabel = { down: m.dDown, up: m.dUp, step: m.dStep, variant: m.dVar }[nx.dir]
-  const suggestions = nx.inKey ? [] : keysContaining(chord.spec).slice(0, 3)
+  const useKey = useStore((s) => s.settings.useKey)
+  const suggestions = useKey && !nx.inKey ? keysContaining(chord.spec).slice(0, 3) : []
 
   const hero = useRef<HTMLElement>(null)
   /** Tras buscar o elegir en la biblioteca: el nombre del acorde y el mástil a la vista. */
@@ -107,10 +109,7 @@ export function ChordsScreen({ hotkeys = true }: { hotkeys?: boolean }) {
       ArrowLeft: () => a.stepPosition(-1),
       ArrowRight: () => a.stepPosition(1),
       ' ': () => a.listen(),
-      n: () => a.next(),
-      N: () => a.next(),
-      b: () => a.back(),
-      B: () => a.back(),
+      ...(useKey ? { n: () => a.next(), N: () => a.next(), b: () => a.back(), B: () => a.back() } : {}),
       f: () => a.toggleFavorite(),
       F: () => a.toggleFavorite(),
     },
@@ -146,7 +145,9 @@ export function ChordsScreen({ hotkeys = true }: { hotkeys?: boolean }) {
         />
       </div>
 
-      <KeyStrip next={nx.inKey ? nx.spec : null} onPick={a.goTo} onSet={a.switchSet} />
+      <InstrumentBar />
+
+      {useKey && <KeyStrip next={nx.inKey ? nx.spec : null} onPick={a.goTo} onSet={a.switchSet} />}
 
       <header className="hero" ref={hero}>
         <div className="hero-name">
@@ -190,13 +191,15 @@ export function ChordsScreen({ hotkeys = true }: { hotkeys?: boolean }) {
           <PositionStepper list={list} index={idx} onStep={a.stepPosition} />
           <div className="dock-actions">
             <ListenButton onListen={a.listen} disabled={!P} />
-            <button type="button" className="next-btn" onClick={a.next}>
-              <span className="nb-main">{nx.inKey ? m.nextBtn : m.variantBtn}</span>
-              <small>
-                {nx.inKey ? `${dirLabel} · ` : ''}
-                {chordSymbol(nx.spec, notation)}
-              </small>
-            </button>
+            {useKey && (
+              <button type="button" className="next-btn" onClick={a.next}>
+                <span className="nb-main">{nx.inKey ? m.nextBtn : m.variantBtn}</span>
+                <small>
+                  {nx.inKey ? `${dirLabel} · ` : ''}
+                  {chordSymbol(nx.spec, notation)}
+                </small>
+              </button>
+            )}
           </div>
           {suggestions.length > 0 && <p className="keysugg-lbl" id="keysugg-lbl">{m.keysWith}</p>}
           {suggestions.length > 0 && (
@@ -209,7 +212,7 @@ export function ChordsScreen({ hotkeys = true }: { hotkeys?: boolean }) {
             </div>
           )}
         </div>
-        <ChangePanel onBack={a.back} onHear={(p, q) => play([p, q], 1.1)} />
+        {useKey && <ChangePanel onBack={a.back} onHear={(p, q) => play([p, q], 1.1)} />}
       </div>
 
       <ChordLibrary

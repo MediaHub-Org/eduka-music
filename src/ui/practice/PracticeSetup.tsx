@@ -6,6 +6,7 @@ import { useT } from '../../i18n'
 import { selectNotation } from '../../state/selectors'
 import { useStore } from '../../state/store'
 import type { PracticePrefs } from '../../state/store'
+import { InstrumentPicker } from '../chords/InstrumentBar'
 import { SearchBox } from '../chords/SearchBox'
 import type { PracticeSource } from './source'
 import { BPM_MAX, BPM_MIN } from './usePractice'
@@ -96,6 +97,9 @@ export function PracticeSetup(p: PracticeSetupProps) {
       <h1 className="ptitle">{m.navPractice}</h1>
 
       <section className="pcard">
+        <Field label={m.instrument}>
+          <InstrumentPicker />
+        </Field>
         <Field label={m.pr.source}>
           <Seg label={m.pr.source} value={src.kind} options={kinds} onPick={pickKind} fmt={(k) => kindName[k]} />
         </Field>

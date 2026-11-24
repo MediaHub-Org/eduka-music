@@ -11,11 +11,37 @@ beforeEach(() => {
 })
 afterEach(cleanup)
 
-const setup = () => {
+const setup = (useKey = true) => {
+  useStore.getState().setSettings({ useKey })
   const user = userEvent.setup()
   render(<App />)
   return { user, search: screen.getByRole('searchbox') }
 }
+
+describe('Acordes sin tonalidad (por defecto)', () => {
+  test('no hay tira, Siguiente ni panel de cambio; el interruptor los muestra', async () => {
+    const { user } = setup(false)
+    expect(screen.queryByRole('button', { name: /Siguiente|Variante ▶/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: /Acordes de/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Al siguiente acorde/ })).not.toBeInTheDocument()
+    await user.keyboard('n')
+    expect(useStore.getState().current.chord).toEqual({ root: 'E', quality: 'm7' })
+    await user.click(screen.getByRole('button', { name: 'Usar tonalidad' }))
+    expect(useStore.getState().settings.useKey).toBe(true)
+    expect(screen.getByRole('button', { name: /Siguiente/ })).toBeInTheDocument()
+  })
+
+  test('el instrumento, la cejilla y el zurdo se cambian desde Acordes', async () => {
+    const { user } = setup(false)
+    await user.selectOptions(screen.getByLabelText('Cejilla'), '2')
+    expect(useStore.getState().settings.capo).toBe(2)
+    await user.click(screen.getByRole('button', { name: 'Zurdo' }))
+    expect(useStore.getState().settings.leftHanded).toBe(true)
+    await user.click(screen.getByRole('button', { name: 'Piano' }))
+    expect(useStore.getState().current.instrument).toBe('piano')
+    expect(screen.queryByLabelText('Cejilla')).not.toBeInTheDocument()
+  })
+})
 
 describe('pantalla Acordes', () => {
   test('buscar "re/fa#" + Enter selecciona D/F#', async () => {

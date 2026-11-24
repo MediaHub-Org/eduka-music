@@ -1,13 +1,15 @@
-import { INSTRUMENT_ORDER } from '../../engine'
 import { useT } from '../../i18n'
 import { useStore } from '../../state/store'
+import type { Settings } from '../../state/store'
 
+const THEMES: Settings['theme'][] = ['auto', 'light', 'dark']
+
+/** Ajustes: solo lo que se toca una vez (idioma, notación, tema). Lo de uso diario vive en Acordes. */
 export function SettingsSheet() {
   const m = useT()
   const settings = useStore((state) => state.settings)
-  const instrument = useStore((state) => state.current.instrument)
   const setSettings = useStore((state) => state.setSettings)
-  const setInstrument = useStore((state) => state.setInstrument)
+  const themeName = { auto: m.themeAuto, light: m.themeLight, dark: m.themeDark }
 
   return (
     <div className="settings-form">
@@ -19,39 +21,23 @@ export function SettingsSheet() {
         </select>
       </label>
       <label className="settings-field">
-        <span>{m.instrument}</span>
-        <select aria-label={m.instrument} value={instrument} onChange={(event) => setInstrument(event.target.value as typeof instrument)}>
-          {INSTRUMENT_ORDER.map((id) => <option key={id} value={id}>{m.inst[id]}</option>)}
-        </select>
-      </label>
-      <label className="settings-field">
         <span>{m.notation}</span>
         <select aria-label={m.notation} value={settings.notation} onChange={(event) => setSettings({ notation: event.target.value as 'latin' | 'english' })}>
           <option value="latin">Do · Re · Mi</option>
           <option value="english">C · D · E</option>
         </select>
       </label>
-      {instrument !== 'piano' && (
-        <>
-          <label className="settings-field">
-            <span>{m.capo}</span>
-            <select aria-label={m.capo} value={settings.capo} onChange={(event) => setSettings({ capo: Number(event.target.value) })}>
-              {Array.from({ length: 8 }, (_, capo) => <option key={capo} value={capo}>{capo === 0 ? m.no : capo}</option>)}
-            </select>
-          </label>
-          <label className="settings-toggle">
-            <span>{m.lefty}</span>
-            <input type="checkbox" checked={settings.leftHanded} onChange={(event) => setSettings({ leftHanded: event.target.checked })} />
-          </label>
-        </>
-      )}
-      <label className="settings-field">
-        <span>{m.labelsL}</span>
-        <select aria-label={m.labelsL} value={settings.labels} onChange={(event) => setSettings({ labels: event.target.value as 'notes' | 'intervals' })}>
-          <option value="notes">{m.notes}</option>
-          <option value="intervals">{m.intervals}</option>
-        </select>
-      </label>
+      <div className="settings-field settings-wide">
+        <span id="theme-lbl">{m.theme}</span>
+        <div className="seg" role="group" aria-labelledby="theme-lbl">
+          {THEMES.map((t) => (
+            <button key={t} type="button" className={settings.theme === t ? 'on' : ''} aria-pressed={settings.theme === t} onClick={() => setSettings({ theme: t })}>
+              {themeName[t]}
+            </button>
+          ))}
+        </div>
+      </div>
+      <p className="note settings-wide">{m.settingsHint}</p>
     </div>
   )
 }

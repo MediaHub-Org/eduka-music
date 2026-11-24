@@ -148,6 +148,14 @@ describe('restauración real', () => {
     expect(s.settings).toMatchObject({ lang: 'es', notation: 'english', capo: 0 })
     expect(s.practice.clickOn).toBe(true)
   })
+  test('tema y useKey: se conservan si son válidos y se ignoran si no (copias antiguas sin ellos)', async () => {
+    localStorage.setItem(STORE_NAME, JSON.stringify({ version: 1, state: { settings: { theme: 'dark', useKey: true } } }))
+    await useStore.persist.rehydrate()
+    expect(useStore.getState().settings).toMatchObject({ theme: 'dark', useKey: true })
+    localStorage.setItem(STORE_NAME, JSON.stringify({ version: 1, state: { settings: { theme: 'sepia', useKey: 'si' } } }))
+    await useStore.persist.rehydrate()
+    expect(useStore.getState().settings).toMatchObject({ theme: 'auto', useKey: false })
+  })
   test('capo NaN → 0', () => {
     useStore.getState().setSettings({ capo: Number.NaN })
     expect(useStore.getState().settings.capo).toBe(0)

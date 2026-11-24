@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../../src/App'
 import { resetStore, useStore } from '../../src/state/store'
 
 beforeEach(() => {
   resetStore()
+  document.documentElement.removeAttribute('data-theme')
   window.location.hash = '#/acordes'
 })
 
@@ -27,14 +28,30 @@ describe('Ajustes', () => {
     expect(useStore.getState().settings.lang).toBe('en')
   })
 
-  test('la cejilla desaparece al elegir piano', async () => {
+  test('solo contiene idioma, notación y tema', async () => {
     const user = userEvent.setup()
     render(<App />)
+    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
+    const dialog = screen.getByRole('dialog', { name: 'Ajustes' })
+    expect(within(dialog).queryByLabelText('Instrumento')).not.toBeInTheDocument()
+    expect(within(dialog).queryByLabelText('Cejilla')).not.toBeInTheDocument()
+    expect(within(dialog).getByLabelText('Idioma')).toBeInTheDocument()
+    expect(within(dialog).getByLabelText('Notas')).toBeInTheDocument()
+  })
+
+  test('el tema se aplica al documento: oscuro, claro y automático', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const root = document.documentElement
+    expect(root.hasAttribute('data-theme')).toBe(false)
 
     await user.click(screen.getByRole('button', { name: 'Ajustes' }))
-    await user.selectOptions(screen.getByLabelText('Instrumento'), 'piano')
-
-    expect(useStore.getState().current.instrument).toBe('piano')
-    expect(screen.queryByLabelText('Cejilla')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Oscuro' }))
+    expect(root.getAttribute('data-theme')).toBe('dark')
+    await user.click(screen.getByRole('button', { name: 'Claro' }))
+    expect(root.getAttribute('data-theme')).toBe('light')
+    await user.click(screen.getByRole('button', { name: 'Auto' }))
+    expect(root.hasAttribute('data-theme')).toBe(false)
+    expect(useStore.getState().settings.theme).toBe('auto')
   })
 })

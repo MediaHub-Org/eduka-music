@@ -9,7 +9,7 @@ describe('store', () => {
     const s = useStore.getState()
     expect(s.current.chord).toEqual({ root: 'E', quality: 'm7' })
     expect(s.current).toMatchObject({ instrument: 'guitar', positionKey: null, direction: 'down', chordSet: 'sevenths' })
-    expect(s.settings).toEqual({ lang: 'es', notation: 'latin', capo: 0, leftHanded: false, labels: 'notes' })
+    expect(s.settings).toEqual({ lang: 'es', notation: 'latin', capo: 0, leftHanded: false, labels: 'notes', theme: 'auto', useKey: false })
     expect(s.practice.ramp).toEqual({ enabled: false, step: 5, everyLoops: 4, max: 160 })
   })
   test('selectChord conserva bajo y resetea posición', () => {
