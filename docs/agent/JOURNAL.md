@@ -10,10 +10,13 @@ Newest entries first. Current state is in [`HANDOFF.md`](HANDOFF.md).
   de "sin remoto", que existía para evitar cuentas y sync, no para ocultar código.
 - **Base `/eduka-music/`** en `vite.config.ts`, manifest, `index.html` y e2e: un
   solo artefacto para Pages y para local, así lo que se prueba es lo que se publica.
-- **Servidor local propio** (`server/serve.mjs`, sin dependencias, loopback,
-  `:4174`, misma ruta que Pages) con `npm start`, más
+- **Servidor local propio** (`server/serve.mjs`, sin dependencias, `:4174`, misma
+  ruta que Pages, loopback IPv4 e IPv6) con `npm start`, más
   `scripts/windows/install-local.ps1` / `uninstall-local.ps1` para arrancarlo al
-  iniciar sesión. Antes dependía de `vite preview` y de una terminal.
+  iniciar sesión. Antes dependía de `vite preview` y de una terminal. Probados los
+  dos: el primer intento falló porque el servidor solo escuchaba IPv4 y `localhost`
+  resolvía a `::1`; ahora escucha en ambos y el desinstalador para el proceso por
+  `.serve.pid` (la coincidencia por línea de comandos fallaba con ruta relativa).
 - **AGPL**: `LICENSE`, `license` en `package.json` y, en Ajustes, versión,
   licencia y enlace al código fuente (la §13 pide ofrecerlo a quien usa la app por
   red). Nuevo test de UI.
@@ -29,7 +32,8 @@ Newest entries first. Current state is in [`HANDOFF.md`](HANDOFF.md).
   de offline se salta solo cuando detecta esa sustitución, con el motivo escrito.
   Es la misma causa del fallo "ambiental" de `test:pwa` en RSS Reader.
 - Verificado: typecheck OK; **2670 tests en 19 ficheros**; build OK (precache 27
-  entradas / 518.54 KiB); e2e 6 pasan y 2 se saltan por AdGuard (sin él, 8/8).
+  entradas / 518.54 KiB); e2e 6 pasan y 2 se saltan por AdGuard en local, y **8/8
+  en CI** (`38a709f`, los dos de offline incluidos).
 
 ## 2026-11-24
 

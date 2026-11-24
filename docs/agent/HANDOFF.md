@@ -13,9 +13,11 @@ Updated: 2026-11-24. History in [`JOURNAL.md`](JOURNAL.md), conventions in
   in local (`http://localhost:4174/eduka-music/`), so the tested artefact is the
   deployed one.
 - **Local install is first class:** `server/serve.mjs` (zero dependencies,
-  loopback only, port 4174) with `npm start`, plus
+  loopback on IPv4 **and** IPv6, port 4174) with `npm start`, plus
   `scripts/windows/install-local.ps1` / `uninstall-local.ps1` for a per-user login
-  task. `npm run e2e` builds and serves through it, not through `vite preview`.
+  task. Both scripts were exercised: they register, serve, and the uninstaller
+  stops the process (via `.serve.pid`) and frees the port. `npm run e2e` builds and
+  serves through it, not through `vite preview`.
 - **Docs stay local.** `docs/reference/mapa-acordes-artifact.html` (the owner's
   prototype) and `docs/superpowers/` (plan and spec) are ignored and were removed
   from the history; backup at `..\Eduka-music-pre-public.bundle`. The goldens in
@@ -45,7 +47,8 @@ Run on 2026-11-24 on this machine (v1.0.0):
   (gzip 17.75 kB), PWA precache 27 entries / 518.54 KiB.
 - `npm run e2e` — **6 passed, 2 skipped** locally: the offline test skips itself
   because AdGuard replaces the installed service worker (see below). Without that
-  interference the suite is 8/8, and CI runs on a clean runner.
+  interference the suite is 8/8: the CI run on `38a709f` passed all eight,
+  including the two offline tests.
 - Not verified automatically: the manual PWA checks below and audible
   metronome/chord timing in real time.
 
