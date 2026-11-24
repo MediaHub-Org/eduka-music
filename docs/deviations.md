@@ -2,6 +2,10 @@
 
 Intentional differences from `docs/reference/mapa-acordes-artifact.html`. Chords without a slash bass must match the artifact (goldens in `tests/golden/artifact.json`).
 
+The artifact is the owner's own prototype and stays out of this public repository
+(ignored by git); regenerating the goldens with `tools/golden/extract.mjs` needs
+that local copy, e.g. `node tools/golden/extract.mjs <ruta-al-artifact> tests/golden/artifact.json`.
+
 ## Task 2 (positions)
 
 - None in scoring or ordering. The artifact's UI-side `ensure()` mutation of the `topList` array is not ported.

@@ -5,19 +5,23 @@ Updated: 2026-11-24. History in [`JOURNAL.md`](JOURNAL.md), conventions in
 
 ## State
 
-- **v1 is complete.** `main` carries these closure commits on top of `f2f54d5`
-  ("docs: clarify offline PWA verification"); tasks 1–13 of the v1 plan are
-  implemented and committed (`76c1fff` favourites, `97c8d8e` settings/PWA/e2e,
-  `f2f54d5` README/offline note). `feat/v1` still points at `f2f54d5`, the v1
-  implementation tip. The working tree is clean.
-- **Local repository by owner decision (2026-11-24): there is no git remote and
-  none is to be created.** Nothing is pushed; the history lives only on this
-  machine.
-- The SDD run's residuals were removed on 2026-11-24: `.superpowers/` (review
-  diffs, task briefs/reports and visual screenshots), `test-results/`,
-  `tsconfig.tsbuildinfo` and a stray `pnpm-lock.yaml`. `dist/` and
-  `node_modules/` are kept (generated, ignored). `package-lock.json` stays the
-  only lockfile.
+- **v1 complete and published as `v1.0.0`.** Source:
+  <https://github.com/MediaHub-Org/eduka-music> (public, AGPL-3.0). App:
+  <https://mediahub-org.github.io/eduka-music/>. CI runs typecheck, tests, e2e and
+  the Pages deploy on every push to `main`.
+- **One path everywhere:** the build lives under `/eduka-music/`, both on Pages and
+  in local (`http://localhost:4174/eduka-music/`), so the tested artefact is the
+  deployed one.
+- **Local install is first class:** `server/serve.mjs` (zero dependencies,
+  loopback only, port 4174) with `npm start`, plus
+  `scripts/windows/install-local.ps1` / `uninstall-local.ps1` for a per-user login
+  task. `npm run e2e` builds and serves through it, not through `vite preview`.
+- **Docs stay local.** `docs/reference/mapa-acordes-artifact.html` (the owner's
+  prototype) and `docs/superpowers/` (plan and spec) are ignored and were removed
+  from the history; backup at `..\Eduka-music-pre-public.bundle`. The goldens in
+  `tests/golden/artifact.json` remain tracked.
+- Owner decision (2026-11-24) reversed the one-day "no remote" rule: the code may
+  be public, but there is still no backend, account, cloud sync or telemetry.
 - Scope delivered: pure-TS engine ported against artifact goldens, slash-bass
   positions for all six instruments, ES/EN chord parser, Web Audio synth and
   lookahead scheduler, persisted zustand store with import/export, SVG
@@ -33,72 +37,66 @@ Updated: 2026-11-24. History in [`JOURNAL.md`](JOURNAL.md), conventions in
 
 ## Verification
 
-Run on 2026-11-24 on this machine:
+Run on 2026-11-24 on this machine (v1.0.0):
 
 - `npm run typecheck` — pass, exit 0.
-- `npm test` — **2664 tests passed in 19 files** (node + jsdom projects),
-  7.80 s.
-- `npm run build` — pass; `dist/assets/index-*.js` 323.77 kB (gzip 103.05 kB),
-  CSS 46.71 kB (gzip 17.54 kB), PWA precache 27 entries / 512.88 KiB, built in
-  283 ms.
-- `npm run e2e` — **8/8 passed** (4 tests × mobile/desktop), but run on
-  `127.0.0.1:4174` with a temporary config, not on the default port. Reason: the
-  RSS Reader app server from another repo is listening on `:4173`; the first
-  `npm run e2e` hit that app (6 failed, 2 passed) and proves nothing about Eduka.
-  With `:4173` free, plain `npm run e2e` is the command. Do not stop the other
-  project's server to free the port; use a temporary config on a free port
-  instead. Chromium was already installed (Playwright 1.65.1).
+- `npm test` — **2670 tests passed in 19 files**, 7.25 s.
+- `npm run build` — pass; JS 327.74 kB (gzip 104.33 kB), CSS 48.18 kB
+  (gzip 17.75 kB), PWA precache 27 entries / 518.54 KiB.
+- `npm run e2e` — **6 passed, 2 skipped** locally: the offline test skips itself
+  because AdGuard replaces the installed service worker (see below). Without that
+  interference the suite is 8/8, and CI runs on a clean runner.
+- Not verified automatically: the manual PWA checks below and audible
+  metronome/chord timing in real time.
 
-Not verified automatically: the three manual PWA checks below, and audible
-metronome/chord timing in real time (the owner's listening checklist from task
-11 is still open).
+### AdGuard replaces the service worker
+
+AdGuard for Windows rewrites the `sw.js` of any page it filters with its own
+`content-script service worker v3.3.1`. The app's Workbox precache is still
+created, but the worker in control is not ours, so an offline reload fails
+intermittently. Proof on this machine: `/sw.js` served over the network is 2.673
+bytes (the real Workbox worker) while the same URL fetched through the active
+worker returns 15.100 bytes of AdGuard code. Pause the filtering or exclude
+`localhost`/`github.io` before doing the offline check. This is also the cause of
+the "environmental" `test:pwa` offline failure recorded in RSS Reader.
 
 ## Decisions
 
-- **No remoto** (owner, 2026-11-24): the project stays a local git repository;
-  no GitHub, no push, no CI.
-- Local only: no backend, accounts, sync or telemetry, and no runtime network
-  requests. Fonts are bundled.
-- Chord search and positions must match the artifact for chords without a slash
-  bass; deviations are documented in [`../deviations.md`](../deviations.md).
-  Notable ones: nullable `nearestPosition`/`chainVoicings` for impossible slash
-  chords, piano changes include `drop` items, and the first launch shows the
-  easiest position (`positionKey: null`) instead of the artifact's default.
+- **Public repo, AGPL-3.0-or-later** (owner, 2026-11-24). The licence link in
+  Ajustes covers §13 (offer the source to network users).
+- **Base `/eduka-music/` everywhere** instead of a custom domain: one build, one
+  behaviour, no DNS dependency.
+- **Local server instead of `vite preview`**: fixed port, correct MIME types, no
+  cache for `sw.js`/`index.html`, and an installable origin at login.
+- Error messages and UI copy go through `src/i18n/` as before; the settings footer
+  is the only new copy.
 - No Web Worker: the worst-case position search measured about 10 ms, well under
   the 150 ms budget.
 - PWA updates must not lose saved data: the store only migrates by schema
   version.
 
-## Post-v1 UX pass (2026-11-24)
-
-- Theme setting (auto/light/dark, `settings.theme`) applied via `data-theme`, with a
-  pre-paint script in `index.html`.
-- `libraryVariants` capped at 4 (`MAX_VARIANTS`).
-- Settings now only holds language, notation and theme. Instrument, capo and
-  left-handed live in `InstrumentBar` on Acordes (instrument also in Practicar).
-- Acordes is key-free by default; `settings.useKey` ("Usar tonalidad") shows the key
-  strip, Siguiente/Atrás, the change panel, key suggestions and the `n`/`b` hotkeys.
-  Picking a chord from Tonalidad turns it on.
-- Acordes has no search box (root/bass/quality grid cover it; search stays in Practicar and Mis cosas). Instrument chips carry an icon and are ordered by how often each was chosen (`eduka-music-instrument-use` in localStorage, order frozen while the picker is mounted).
-- Position stepper uses `stepPositions` (max 5, easiest first, then spread up the neck, >=3 frets apart); `topPositions` stays untouched because it is golden-tested against the artifact. Library cards use the same selection capped at 4.
-- Verified: typecheck, 2668 tests, build, e2e 8/8 (temporary port 4190).
-
 ## Next
 
-Nothing is half-done or uncommitted. v1 is closed; v2 (chord identification,
-scales on the neck, tuner, Tauri packaging) needs its own plan and is out of
-scope here.
+Nothing is half-done or uncommitted. v1 is closed and deployed; v2 (chord
+identification, scales on the neck, tuner, Tauri packaging) needs its own plan and
+is out of scope here.
 
 ## Owner checks (manual)
 
-1. **Install the PWA in Chrome or Edge.** Open the preview/production origin,
-   use the install icon (or menu → "Install Eduka Music"), and confirm the icon
-   and name appear. To serve the built app: `npm run build` then
-   `npm run preview`.
-2. **Standalone window.** Launch the installed app and confirm it opens in its
-   own window without browser chrome (manifest `display: standalone`), with the
-   bottom navigation clear of the safe areas on a phone-sized window.
-3. **Cold start offline.** Close the installed app, disconnect the network,
-   launch it again and confirm it opens at Acordes and that navigation, search
-   and the saved favourites/progressions still work. The Playwright test covers
-   precache plus navigation offline, not the installed cold start.
+1. **Install from Pages.** Open <https://mediahub-org.github.io/eduka-music/> in
+   Chrome or Edge, use the install icon (or menu → "Install Eduka Music") and
+   confirm the icon and name.
+2. **Install locally.** `npm run build && npm start`, open
+   `http://localhost:4174/eduka-music/`, install, then
+   `pwsh -NoProfile -File scripts\windows\install-local.ps1 -StartNow` so it
+   survives a reboot. Remember these are two separate installs with separate
+   favourites and progressions.
+3. **Standalone window.** Launch the installed app and confirm it opens in its own
+   window without browser chrome (manifest `display: standalone`), with the bottom
+   navigation clear of the safe areas on a phone-sized window.
+4. **Cold start offline.** Close the installed app, disconnect the network (and,
+   on this machine, pause AdGuard or exclude the origin), launch it again and
+   confirm it opens at Acordes and that navigation, search and the saved
+   favourites/progressions still work.
+5. **Listening.** Two minutes at 60 and at 180 BPM: no drift, no lost clicks, and
+   the chord lands on the accent.
