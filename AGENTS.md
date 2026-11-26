@@ -54,7 +54,7 @@ can be installed from Chrome/Edge.
 
 - v1 is complete (plan tasks 1-13). Current state, exact checks and the next step
   live in the AgenticHub central roadmap and handoff
-  (`AgenticHub/projects/working/`); the repo's `docs/agent/` files are archive.
+  (`AgenticHub/workspace-panel/working/`); the repo's `docs/agent/` files are archive.
 - **Published on GitHub** (owner decision, 2026-11-24, reversing the one-day
   "no remote" rule): source at
   [`MediaHub-Org/eduka-music`](https://github.com/MediaHub-Org/eduka-music), AGPL-3.0,
